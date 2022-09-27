@@ -73,7 +73,7 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
 
 
-            screenCanvas.drawLine(ball.x,ball.y,ball.initialX+ball.x,ball.initialY+ball.y,paint);
+//            screenCanvas.drawLine(ball.x,ball.y,ball.initialX+ball.x,ball.initialY+ball.y,paint);
 
 
 
@@ -114,6 +114,7 @@ public class GameView extends SurfaceView implements Runnable
                         ball.setPosition((int) (event.getX() - ball.width / 2), (int) (event.getY() - ball.height / 2));
 
                         Log.d("fuck", ball.calcThrowAngle() + "");
+
 
                     }
                 }
