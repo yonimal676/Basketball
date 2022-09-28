@@ -8,6 +8,10 @@ public class Player
     int width, height;
     Bitmap[] playerBitmapArr;
 
-    public Player() {
+    public final int HEIGHT = 182; // 6’0″ player should launch the ball at a 50.8 degree angle
+
+    public Player()
+    {
+
     }
 }

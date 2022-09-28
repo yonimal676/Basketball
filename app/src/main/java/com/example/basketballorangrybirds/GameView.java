@@ -2,7 +2,6 @@ package com.example.basketballorangrybirds;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -12,6 +11,7 @@ public class GameView extends SurfaceView implements Runnable
 {
     private Background background;
     private Ball ball;
+    private Precursor precursor;
     private Player player;
     private Basket basket;
     private Paint paint;                  // The paint is the thing that "draws"// the image/Bitmap.
@@ -19,11 +19,13 @@ public class GameView extends SurfaceView implements Runnable
     private final int screenX, screenY;
     private final float ratioX, ratioY;
 
-    private int sleepMillis = 17;
+    private int sleepMillis = 16;
     private boolean isPlaying;
     private Thread thread;
     private final GameActivity activity;
     private final Context gameViewContext;
+
+
 
 
     public GameView(GameActivity activity, int screenX, int screenY)
@@ -44,23 +46,21 @@ public class GameView extends SurfaceView implements Runnable
 
         isPlaying = true;
 
-        paint.setColor(Color.BLACK);
+
 
     }
 
     @Override
     public void run() {
-        while (isPlaying)
-        {
+        while (isPlaying) {
             update();
             draw();
             sleep();
-        }
-    }
+        }    }
 
     public void update ()
     {
-   //ball.Formula(x,y,velocity)
+        //ball.Formula(x,y,velocity)
     }
 
     public void draw ()
@@ -72,15 +72,17 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawBitmap(background.backgroundBitmap, background.x, background.y, paint);
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
 
+            screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
 
 //            screenCanvas.drawLine(ball.x,ball.y,ball.initialX+ball.x,ball.initialY+ball.y,paint);
 
-
+//           precursor = new Precursor();
 
 
             getHolder().unlockCanvasAndPost(screenCanvas);
         }
     }
+
 
 
     private void sleep() {
@@ -106,18 +108,33 @@ public class GameView extends SurfaceView implements Runnable
                 break;
             case MotionEvent.ACTION_MOVE: // still touching
 
-                if (ball.getActionDown() && (ball.touched(event.getX(),event.getY())))
+                if (ball.getActionDown() /*&& (ball.touched(event.getX(),event.getY()))*/)
                 {// if touched the ball
-                    if (calcDistance(ball.initialX, (int) event.getX(), ball.initialY, (int) event.getY()) < 170)
-                    {// to make sure that the player doesn't take the ball away
-
+                    if (calcDistance(ball.initialX, (int) event.getX(), ball.initialY, (int) event.getY()) <= 170)
+                    // to make sure that the player doesn't take the ball away
                         ball.setPosition((int) (event.getX() - ball.width / 2), (int) (event.getY() - ball.height / 2));
 
-                        Log.d("fuck", ball.calcThrowAngle() + "");
+
+
+
+                    else /* try to explain this to a 6 y/o */
+                    {
+                        float perpSide = (float) Math.sin(ball.calcThrowAngle()) * 170;
+                        float perpStraight = (float) Math.cos(ball.calcThrowAngle()) * 170;
+                        // issue NO.4
+
+                        ball.x = (int) (ball.initialX + perpStraight);
+                        ball.y = (int) (ball.initialY + perpSide);
 
 
                     }
+
+                    Log.d("fuck", ball.calcThrowAngle() + "");
+
                 }
+
+
+
                 break;
 
             case MotionEvent.ACTION_UP: // end of touch

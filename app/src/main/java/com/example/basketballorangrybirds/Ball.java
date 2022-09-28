@@ -1,12 +1,9 @@
 package com.example.basketballorangrybirds;
-import android.content.Context;
+
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Paint;
 import android.graphics.Rect;
-import android.util.Log;
-import android.view.View;
 
 public class Ball
 {
@@ -16,23 +13,30 @@ public class Ball
     int width, height;
     Bitmap ballBitmap;
 
+    Bitmap centerBitmap;
+
+    public final int WEIGHT = 620; // grams
+
     float hypo , perpTop, perpLeft; // hypotenuse (יתר) , perpendicular (ניצב)
 
     public Ball (Resources res, float ratioX, float ratioY, int screenX, int screenY)
     {
-        int num = (int) screenX / screenY; // I'm clever tbh
+        int num = screenX / screenY; // I'm clever tbh
 
         x = (int) (500 * ratioX);
         y = (int) ((screenY - 650) * ratioY);
 
-        initialX = x;
-        initialY = y;
+        width = 50 * num;
+        height = 50 * num;
 
-        width = (int) (50 * num);
-        height = (int) (50 * num);
+        initialX = x + width/2;
+        initialY = y + height/2;
 
         ballBitmap = BitmapFactory.decodeResource(res, R.drawable.basketball);
         ballBitmap = Bitmap.createScaledBitmap(ballBitmap, width, height, false);
+
+        centerBitmap = BitmapFactory.decodeResource(res, R.drawable.black);
+        centerBitmap = Bitmap.createScaledBitmap(centerBitmap,10,10,false);
 
     }
     public void setActionDown (boolean ActionDown)
@@ -56,26 +60,26 @@ public class Ball
 
         return isXinside && isYinside;
     }
-    public void setPosition(int x, int y)
+
+    public void setPosition (int x, int y)
     {
         this.x = x;
         this.y = y;
-        // Life is good ヽ(✿ﾟ▽ﾟ)ノ (only when your code works)
     }
 
 
-    public float calcThrowAngle () // omg this was so easy
+    public float calcThrowAngle () /* try to explain this to a 6 y/o */
     {
-        perpTop = initialX - x;
-        perpLeft = y - initialY;
+        perpTop = Math.abs(initialX - x) + width/2;
+        perpLeft = Math.abs(y - initialY) + height/2;
 
         return (float) ((180/Math.PI) * (Math.atan(perpLeft / perpTop))); // 180 / pi  = 1 radian = ∡∅
     }
 
-    public int[] Formula (int x, int y)
+    public int Formula (int x, int y)
     {
 
-        return new int[0];
+        return 0;
     }
 
 
