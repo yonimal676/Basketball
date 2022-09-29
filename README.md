@@ -1,3 +1,3 @@
-This is a game made by me, feel free to contribute whatever whenever.
+Notes:
 
-The game is going to be 2D and simillar to angry birds in terms of mechanics/physics.
+1. whenever there's a comment such as // issue NO. _number_   , it point to the projects' issues on github.
