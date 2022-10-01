@@ -1,9 +1,10 @@
 package com.example.basketballorangrybirds;
-import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.WindowManager;
-import android.widget.Button;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -18,6 +19,7 @@ public class MainActivity extends AppCompatActivity
                 , WindowManager.LayoutParams.FLAG_FULLSCREEN); // make it fullscreen
 
 
-        findViewById(R.id.play_btn).setOnClickListener(view -> startActivity(new Intent(MainActivity.this, GameActivity.class)));
+        findViewById(R.id.play_btn).setOnClickListener(view ->
+                startActivity(new Intent(MainActivity.this, GameActivity.class)));
     }
 }

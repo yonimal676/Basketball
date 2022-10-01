@@ -8,29 +8,38 @@ import android.graphics.Rect;
 public class Ball
 {
     boolean actionDown = false;     // down => touchDown (on the screen).
-
-    int x,y, initialX, initialY;
+    float screenY;
+    float x, y;
+    float initialX, initialY;  // acts as the (0,0) point.
     int width, height;
     Bitmap ballBitmap;
 
     Bitmap centerBitmap;
 
+
+
+
     public final int WEIGHT = 620; // grams
+    public final float GRAVITY = 9.8f;
+    public float VELOCITY;
 
-    float hypo , perpTop, perpLeft; // hypotenuse (יתר) , perpendicular (ניצב)
 
-    public Ball (Resources res, float ratioX, float ratioY, int screenX, int screenY)
+    public Ball (Resources res, float ratioX, float ratioY, float screenX, float screenY)
     {
-        int num = screenX / screenY; // I'm clever tbh
+        this.screenY = screenY;
+        final float ratioToScale = ratioY * ratioX; /********/
 
-        x = (int) (500 * ratioX);
-        y = (int) ((screenY - 650) * ratioY);
+        x = (int) (screenX / 2); // 1/8 to the right
+        y = (int) (screenY - screenY / 2); // 1 - 1/3.5 up
 
-        width = 50 * num;
-        height = 50 * num;
 
-        initialX = x + width/2;
-        initialY = y + height/2;
+        width = (int) (300 * ratioToScale);
+        height = (int) (300 * ratioToScale);
+
+        initialX = x + width/2f;
+        initialY = y + height/2f;
+
+
 
         ballBitmap = BitmapFactory.decodeResource(res, R.drawable.basketball);
         ballBitmap = Bitmap.createScaledBitmap(ballBitmap, width, height, false);
@@ -39,42 +48,33 @@ public class Ball
         centerBitmap = Bitmap.createScaledBitmap(centerBitmap,10,10,false);
 
     }
-    public void setActionDown (boolean ActionDown)
+    public void setActionDown (boolean ActionDown) {this.actionDown = ActionDown;}
+
+    public boolean getActionDown() {return actionDown;}
+
+
+    public Rect getRektLol () {return new Rect((int) x,(int) y, (int) (x + width), (int) (y + height ));}
+    //(⌐■_■)✧
+
+
+    public boolean isTouching (float x, float y) // Did touch in bounds?
+    {return ((x >= this.x) && (x <= this.x + width) && y >= this.y) && (y <= this.y + height);}
+
+    public void setPosition (float x, float y)
     {
-        this.actionDown = ActionDown;
+        this.x = x - width /2f;
+        this.y = /*screenY -*/ y - height /2f;
     }
 
-    public boolean getActionDown()
-    {
-        return actionDown;
-    }
-
-    Rect getRect () {
-        return new Rect((int) x,(int) y, (int) (x + width), (int) (y + height ));
-    }
-
-    public boolean touched (float x, float y) // Did touch in bounds?
-    {
-        boolean isXinside = (x >= this.x) && (x <= this.x +200);
-        boolean isYinside = (y >= this.y) && (y <= this.y +200);
-
-        return isXinside && isYinside;
-    }
-
-    public void setPosition (int x, int y)
-    {
-        this.x = x;
-        this.y = y;
-    }
+    public float angle(float Tx, float Ty) // T - Touch point || * returns a radian
+    {return (float) (Math.atan2(initialY - Ty, initialX - Tx));} // issue NO.2
 
 
-    public float calcThrowAngle () /* try to explain this to a 6 y/o */
-    {
-        perpTop = Math.abs(initialX - x) + width/2;
-        perpLeft = Math.abs(y - initialY) + height/2;
+    double calcDistance (float x, float y)
+    {return Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));} // this is the distance function
 
-        return (float) ((180/Math.PI) * (Math.atan(perpLeft / perpTop))); // 180 / pi  = 1 radian = ∡∅
-    }
+
+
 
     public int Formula (int x, int y)
     {

@@ -9,10 +9,10 @@ public class Background
     int x = 0, y = 0;
     Bitmap backgroundBitmap;
 
-    public Background(Resources res, int ScreenWidth, int ScreenHeight)
+    public Background(Resources res, int screenX, int screenY)
     {
         backgroundBitmap = BitmapFactory.decodeResource(res, R.drawable.background);
-        backgroundBitmap = Bitmap.createScaledBitmap(backgroundBitmap, ScreenWidth, ScreenHeight, false);
+        backgroundBitmap = Bitmap.createScaledBitmap(backgroundBitmap, screenX, screenY, false);
 
 
     }

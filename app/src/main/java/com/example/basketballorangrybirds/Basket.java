@@ -12,6 +12,7 @@ public class Basket
 
     public Basket()
     {
+        //final float ratioToScale = ratioY * ratioX;
 
     }
 

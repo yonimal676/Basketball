@@ -9,34 +9,41 @@ import android.view.SurfaceView;
 
 public class GameView extends SurfaceView implements Runnable
 {
+
+    private Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
+    private float angle_of_touch;
+    private final int max_i_to_b;   // serves as the radius of the circle witch determines max dist. between ball and inital
+    // General
+
     private Background background;
     private Ball ball;
     private Precursor precursor;
     private Player player;
     private Basket basket;
-    private Paint paint;                  // The paint is the thing that "draws"// the image/Bitmap.
+    // Objects
 
-    private final int screenX, screenY;
-    private final float ratioX, ratioY;
-
-    private int sleepMillis = 16;
+    private final int screenX , screenY;    // notice that
+    private final float ratioX , ratioY;
+    private final int SLEEP_MILLIS = 16;
     private boolean isPlaying;
     private Thread thread;
     private final GameActivity activity;
-    private final Context gameViewContext;
+    private final Context gameActivityContext;
+
+    // Technical stuff
 
 
 
 
-    public GameView(GameActivity activity, int screenX, int screenY)
+    public GameView(GameActivity activity, int screenX,  int screenY)
     {
         super(activity);
 
         this.activity = activity;
-        gameViewContext = this.activity;
+        gameActivityContext = this.activity;
 
         this.screenX = screenX;
-        this.screenY = - screenY;
+        this.screenY = screenY;
 
         ratioX = 1080f / screenX; // side to side
         ratioY = 1920f / screenY ; // top to bottom
@@ -46,93 +53,134 @@ public class GameView extends SurfaceView implements Runnable
 
         isPlaying = true;
 
-
-
+        max_i_to_b = (int) (500 * ratioX * ratioY);
     }
+
+
 
     @Override
     public void run() {
-        while (isPlaying) {
-            update();
-            draw();
-            sleep();
-        }    }
+        while (isPlaying) { // because we don't want to run the app if we don't play.
+            update();//The screen
+            draw();//The components
+            sleep();//To render
+        }
+    }
 
     public void update ()
     {
         //ball.Formula(x,y,velocity)
     }
 
-    public void draw ()
-    {
+
+
+    public void draw () {
         if (getHolder().getSurface().isValid()) // is the surface valid?
         {
             Canvas screenCanvas = getHolder().lockCanvas(); // create the canvas
 
             screenCanvas.drawBitmap(background.backgroundBitmap, background.x, background.y, paint);
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
-
             screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
-
-//            screenCanvas.drawLine(ball.x,ball.y,ball.initialX+ball.x,ball.initialY+ball.y,paint);
-
-//           precursor = new Precursor();
-
 
             getHolder().unlockCanvasAndPost(screenCanvas);
         }
     }
 
 
-
     private void sleep() {
-        try { Thread.sleep(sleepMillis); }// = 17
+        try { Thread.sleep(SLEEP_MILLIS); }// = 16
         catch (InterruptedException e) {e.printStackTrace();}
     }
 
-    public void resume() {
-        isPlaying = true;
-        thread = new Thread(this); // -> "this" is the run() method above.
-        thread.start();
-    } // resume the game
+
+
+
 
 
     @Override
-    public boolean onTouchEvent (MotionEvent event) // is a function that helps me detect touch.
+    public boolean onTouchEvent (MotionEvent event) // this is a method that helps me detect touch.
     {
-        switch (event.getAction())
+
+        switch (event.getAction()) // down/move/up
         {
-            case MotionEvent.ACTION_DOWN: // started touch
-                if (ball.touched(event.getX(),event.getY()))
+
+            case MotionEvent.ACTION_DOWN:
+                // started touch
+
+                if (ball.isTouching(event.getX(),event.getY()))
                     ball.setActionDown(true);
+                // 'ball' has a boolean method that indicates whether the object is touched.
+
+                Log.d("key1121", event.getX() + " ||| " + event.getY() );
+
+
                 break;
-            case MotionEvent.ACTION_MOVE: // still touching
-
-                if (ball.getActionDown() /*&& (ball.touched(event.getX(),event.getY()))*/)
-                {// if touched the ball
-                    if (calcDistance(ball.initialX, (int) event.getX(), ball.initialY, (int) event.getY()) <= 170)
-                    // to make sure that the player doesn't take the ball away
-                        ball.setPosition((int) (event.getX() - ball.width / 2), (int) (event.getY() - ball.height / 2));
 
 
 
 
-                    else /* try to explain this to a 6 y/o */
+
+            case MotionEvent.ACTION_MOVE:  // still touching and moving
+
+                if (ball.getActionDown()) /* try to explain this to a 6 y/o */
+                {   // if touched the ball
+
+                    if (ball.calcDistance(event.getX(), event.getY()) < max_i_to_b)
+                      // checks dist. between finger and initial point.
+                        ball.setPosition((int) (event.getX()), (int) (event.getY()));
+
+
+
+
+                    // this took me a full day to understand.. no kidding
+
+                    else // issue NO.4
+
                     {
-                        float perpSide = (float) Math.sin(ball.calcThrowAngle()) * 170;
-                        float perpStraight = (float) Math.cos(ball.calcThrowAngle()) * 170;
-                        // issue NO.4
-
-                        ball.x = (int) (ball.initialX + perpStraight);
-                        ball.y = (int) (ball.initialY + perpSide);
+                        // finger is far away from the i (initial spot)
 
 
-                    }
+                        angle_of_touch = ball.angle(event.getX(),event.getY());
+                        // hypo- hypotenuse (יתר) , perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
 
-                    Log.d("fuck", ball.calcThrowAngle() + "");
+                        float perpOpp = (float) Math.abs( Math.sin(angle_of_touch) * max_i_to_b)
+                                , perpAdj = (float) Math.abs(Math.cos(angle_of_touch)  * max_i_to_b);
 
-                }
 
+
+
+        /*qtr.4*/      if (Math.abs(180/Math.PI*angle_of_touch) >= 90 && 180/Math.PI*angle_of_touch >= 0)
+                            ball.setPosition(ball.initialX + perpAdj, ball.initialY - perpOpp);
+
+        /*qtr.1*/      else if (Math.abs(180/Math.PI*angle_of_touch) < 90 && 180/Math.PI*angle_of_touch >= 0)
+                            ball.setPosition(ball.initialX - perpAdj, ball.initialY - perpOpp);
+
+        /*qtr.3*/      else if (Math.abs(180/Math.PI*angle_of_touch) >= 90 && 180/Math.PI*angle_of_touch < 0)
+                            ball.setPosition(ball.initialX + perpAdj, ball.initialY + perpOpp);
+
+        /*qtr.2*/      else // <90 <0 ---> -x -y
+                            ball.setPosition(ball.initialX - perpAdj, ball.initialY + perpOpp);
+                        // issue NO. 6
+
+
+                        Log.d("key1121","--------------------- ||| ---------------------" );
+
+                        Log.d("key1121 PERP", perpOpp + " OPP ||| ADJ " + perpAdj);
+                        Log.d("key1121 BALL", ball.initialX + " I-X ||| I-Y " + ball.initialY);
+                        Log.d("key1121 BALL", ball.x + " B-X ||| B-Y " + ball.y);
+
+
+
+
+
+
+                    }//calcDistance<170
+
+
+                    Log.d("key1121 ANGLE", 180/Math.PI * ball.angle(event.getX(),event.getY()) + "");
+
+                }//ball.getActionDown()
 
 
                 break;
@@ -140,12 +188,28 @@ public class GameView extends SurfaceView implements Runnable
             case MotionEvent.ACTION_UP: // end of touch
                 ball.setActionDown(false);
 
+
+                ball.x = ball.initialX - ball.width/2f; /* TEMPORARY! */
+                ball.y = ball.initialY - ball.height/2f; /* TEMPORARY! */
+
+
+
                 // start timer for calculating the speed of the ball.
                 break;
         }
         return true;
     }
 
-    double calcDistance (int x1, int x2, int y1, int y2)
-    {return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 -y2) * (y1-y2));} // this is the distance function
+
+
+
+
+    public void resume() {// issue NO.1
+
+        isPlaying = true;
+        thread = new Thread(this); // -> "this" is the run() method above.
+        thread.start();
+    } // resume the game
+
+
 }
