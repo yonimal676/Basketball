@@ -21,18 +21,17 @@ public class Precursor extends Activity
         setContentView(drawLine);
     }
 
-    class DrawLine extends View
+    static class DrawLine extends View
     {
         Paint paint = new Paint();
 
         public DrawLine(Context context) {
             super(context);
-            paint.setColor(Color.BLUE);
         }
+
 
         @Override
         protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
             canvas.drawLine(10, 20, 30, 40, paint);
         }
     }

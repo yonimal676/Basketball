@@ -2,8 +2,9 @@ package com.example.basketballorangrybirds;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
@@ -11,9 +12,11 @@ public class GameView extends SurfaceView implements Runnable
 {
 
     private Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
-    private float angle_of_touch;
-    private final int max_i_to_b;   // serves as the radius of the circle witch determines max dist. between ball and inital
+    private final int maxDistBallToInitial;   // is the radius of the circle which determines max dist. between b - ball and i - initial points
+    private float perpOpp, perpAdj;
     // General
+
+
 
     private Background background;
     private Ball ball;
@@ -24,7 +27,7 @@ public class GameView extends SurfaceView implements Runnable
 
     private final int screenX , screenY;    // notice that
     private final float ratioX , ratioY;
-    private final int SLEEP_MILLIS = 16;
+    private final byte SLEEP_MILLIS = 16; // byte is like int
     private boolean isPlaying;
     private Thread thread;
     private final GameActivity activity;
@@ -35,8 +38,7 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-    public GameView(GameActivity activity, int screenX,  int screenY)
-    {
+    public GameView(GameActivity activity, int screenX,  int screenY) {
         super(activity);
 
         this.activity = activity;
@@ -46,15 +48,25 @@ public class GameView extends SurfaceView implements Runnable
         this.screenY = screenY;
 
         ratioX = 1080f / screenX; // side to side
-        ratioY = 1920f / screenY ; // top to bottom
+        ratioY = 1920f / screenY; // top to bottom
 
         background = new Background(getResources(), screenX, screenY);
         ball = new Ball(getResources(), ratioX, ratioY, screenX, screenY);
 
         isPlaying = true;
 
-        max_i_to_b = (int) (500 * ratioX * ratioY);
+        maxDistBallToInitial = (int) (300 * ratioX * ratioY);
+
+        precursor = new Precursor();
+
+        paint = new Paint();
+        paint.setColor(Color.BLACK);
+        paint.setStyle(Paint.Style.FILL_AND_STROKE);
+        paint.setPathEffect(new DashPathEffect(new float[]{30, 30}, 0)); // array of ON and OFF distances,
+        paint.setStrokeWidth(6f);
+
     }
+
 
 
 
@@ -79,9 +91,48 @@ public class GameView extends SurfaceView implements Runnable
         {
             Canvas screenCanvas = getHolder().lockCanvas(); // create the canvas
 
-            screenCanvas.drawBitmap(background.backgroundBitmap, background.x, background.y, paint);
+
+            screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint);
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
             screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
+
+
+            screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint);
+
+
+            float angle_of_touch = ball.angle(ball.x, ball.y);
+
+
+
+
+            switch (ball.quarter)
+            {
+                case 1:
+                    screenCanvas.drawLine(ball.x + fixLineToBall(),ball.y + ball.height - fixLineToBall(),
+                            ball.initialX/* - perpAdj - fixX()*/,ball.initialY/* + perpOpp + fixY()*/, paint);
+                    break;
+
+                case 2:
+                    screenCanvas.drawLine(ball.x + ball.width - fixLineToBall(),ball.y + ball.height - fixLineToBall(),
+                            ball.initialX/* + perpAdj + fixX()*/,ball.initialY/* + perpOpp + fixY()*/, paint);
+                    break;
+
+                case 3:
+                    screenCanvas.drawLine(ball.x + ball.width - fixLineToBall(),ball.y + fixLineToBall(),
+                            ball.initialX/* + perpAdj + fixX()*/,ball.initialY/* - perpOpp - fixY()*/, paint);
+                    break;
+
+                case 4:
+                    screenCanvas.drawLine(ball.x + fixLineToBall(), ball.y + fixLineToBall(),
+                            ball.initialX/* - perpAdj*/,ball.initialY/* - perpOpp*/, paint);
+                    break;
+            }
+
+            // TODO: 05/10/2022
+            // make the line connect to the ball at the RIGHT angle from i
+
+
+
 
             getHolder().unlockCanvasAndPost(screenCanvas);
         }
@@ -94,8 +145,18 @@ public class GameView extends SurfaceView implements Runnable
     }
 
 
+    public void setBallQuarter(byte qtr)
+    {ball.quarter = qtr;}
 
 
+    public float fixLineToBall() // issue: correcting the line with the ball #13
+    {return (float) (Math.tan(22.5) * ball.width/2 / Math.sqrt(2));}
+
+    public float fixX()
+    {return ball.width/2f;}
+
+    public float fixY()
+    {return ball.height/2f;}
 
 
     @Override
@@ -104,16 +165,12 @@ public class GameView extends SurfaceView implements Runnable
 
         switch (event.getAction()) // down/move/up
         {
-
-            case MotionEvent.ACTION_DOWN:
-                // started touch
+            case MotionEvent.ACTION_DOWN:// started touch
 
                 if (ball.isTouching(event.getX(),event.getY()))
                     ball.setActionDown(true);
                 // 'ball' has a boolean method that indicates whether the object is touched.
 
-                Log.d("key1121", event.getX() + " ||| " + event.getY() );
-
 
                 break;
 
@@ -121,79 +178,90 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-            case MotionEvent.ACTION_MOVE:  // still touching and moving
+            case MotionEvent.ACTION_MOVE:
+            {
+                if (ball.getActionDown())
+                {// if touched the ball
 
-                if (ball.getActionDown()) /* try to explain this to a 6 y/o */
-                {   // if touched the ball
+                    float angle_of_touch = ball.angle(event.getX(), event.getY());
 
-                    if (ball.calcDistance(event.getX(), event.getY()) < max_i_to_b)
-                      // checks dist. between finger and initial point.
-                        ball.setPosition((int) (event.getX()), (int) (event.getY()));
-
-
+//                    Log.d("key1121 angle", "" + 180/Math.PI * angle_of_touch);
 
 
-                    // this took me a full day to understand.. no kidding
-
-                    else // issue NO.4
-
+                    if (Math.abs(180 / Math.PI * angle_of_touch) >= 90)
                     {
-                        // finger is far away from the i (initial spot)
+                        if (180 / Math.PI * angle_of_touch >= 0)
+                            setBallQuarter((byte) 1); // top right corner
+                        else
+                            setBallQuarter((byte) 4); // bottom right corner
+                    }
+                    else
+                    {
+                        if (180 / Math.PI * angle_of_touch >= 0)
+                            setBallQuarter((byte) 2); // top left corner
+                        else
+                            setBallQuarter((byte) 3); // bottom left corner
+                    }
 
 
-                        angle_of_touch = ball.angle(event.getX(),event.getY());
+
+
+
+
+                    if (ball.calcDistance(event.getX(), event.getY()) < maxDistBallToInitial) // in drag-able circle
+                        ball.setPosition(event.getX(), event.getY());
+
+
+
+
+
+
+                    else {// issue NO.4   ||   finger drag outside of radius
+
                         // hypo- hypotenuse (יתר) , perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
 
-                        float perpOpp = (float) Math.abs( Math.sin(angle_of_touch) * max_i_to_b)
-                                , perpAdj = (float) Math.abs(Math.cos(angle_of_touch)  * max_i_to_b);
+                        perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * maxDistBallToInitial);
+                        perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * maxDistBallToInitial);
 
 
 
+                        switch (ball.quarter)
+                        {
+                            case 1: ball.setPosition(ball.initialX + perpAdj, ball.initialY - perpOpp); //
+                                break;
 
-        /*qtr.4*/      if (Math.abs(180/Math.PI*angle_of_touch) >= 90 && 180/Math.PI*angle_of_touch >= 0)
-                            ball.setPosition(ball.initialX + perpAdj, ball.initialY - perpOpp);
+                            case 2: ball.setPosition(ball.initialX - perpAdj, ball.initialY - perpOpp); //
+                                break;
 
-        /*qtr.1*/      else if (Math.abs(180/Math.PI*angle_of_touch) < 90 && 180/Math.PI*angle_of_touch >= 0)
-                            ball.setPosition(ball.initialX - perpAdj, ball.initialY - perpOpp);
+                            case 3: ball.setPosition(ball.initialX - perpAdj, ball.initialY + perpOpp); //
+                                break;
 
-        /*qtr.3*/      else if (Math.abs(180/Math.PI*angle_of_touch) >= 90 && 180/Math.PI*angle_of_touch < 0)
-                            ball.setPosition(ball.initialX + perpAdj, ball.initialY + perpOpp);
+                            case 4: ball.setPosition(ball.initialX + perpAdj, ball.initialY + perpOpp); //
+                                break;
+                        }
 
-        /*qtr.2*/      else // <90 <0 ---> -x -y
-                            ball.setPosition(ball.initialX - perpAdj, ball.initialY + perpOpp);
-                        // issue NO. 6
-
-
-                        Log.d("key1121","--------------------- ||| ---------------------" );
-
-                        Log.d("key1121 PERP", perpOpp + " OPP ||| ADJ " + perpAdj);
-                        Log.d("key1121 BALL", ball.initialX + " I-X ||| I-Y " + ball.initialY);
-                        Log.d("key1121 BALL", ball.x + " B-X ||| B-Y " + ball.y);
-
-
-
-
-
-
-                    }//calcDistance<170
-
-
-                    Log.d("key1121 ANGLE", 180/Math.PI * ball.angle(event.getX(),event.getY()) + "");
+                    }//outside drag-able circle
 
                 }//ball.getActionDown()
 
+//                Log.d("KEY1121 qtr", ball.quarter+ "" );
 
-                break;
+            }//ACTION_MOVE
+
+            break;
 
             case MotionEvent.ACTION_UP: // end of touch
                 ball.setActionDown(false);
 
 
-                ball.x = ball.initialX - ball.width/2f; /* TEMPORARY! */
-                ball.y = ball.initialY - ball.height/2f; /* TEMPORARY! */
 
-
-
+                /*long start = System.nanoTime();
+                if (start >= 1000)
+                {
+                    long elapsedTime = System.nanoTime() - start;
+                    Log.d("key1121 time", "elapsedTime: " + elapsedTime);
+                }
+*/
                 // start timer for calculating the speed of the ball.
                 break;
         }
@@ -204,7 +272,9 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-    public void resume() {// issue NO.1
+
+
+    public void resume() {// discussion: "activity lifecycle"
 
         isPlaying = true;
         thread = new Thread(this); // -> "this" is the run() method above.
@@ -212,4 +282,15 @@ public class GameView extends SurfaceView implements Runnable
     } // resume the game
 
 
+    public void pause()
+    {
+        try {
+            isPlaying = false;
+            thread.join(); // join = stop
+            Thread.sleep(100);
+
+//            activity.PauseMenu();
+        }
+        catch (InterruptedException e) {e.printStackTrace();}
+    }
 }

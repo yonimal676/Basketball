@@ -32,7 +32,7 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-//        gameView.pause();
+        gameView.pause();
     }
 
     @Override
@@ -40,4 +40,11 @@ public class GameActivity extends AppCompatActivity {
         super.onResume();
         gameView.resume();
     }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+    }
+
+
 }

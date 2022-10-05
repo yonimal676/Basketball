@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory;
 
 public class Background
 {
-    int x = 0, y = 0;
     Bitmap backgroundBitmap;
 
     public Background(Resources res, int screenX, int screenY)

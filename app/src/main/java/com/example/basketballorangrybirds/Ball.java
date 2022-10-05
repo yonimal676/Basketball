@@ -8,13 +8,15 @@ import android.graphics.Rect;
 public class Ball
 {
     boolean actionDown = false;     // down => touchDown (on the screen).
-    float screenY;
     float x, y;
-    float initialX, initialY;  // acts as the (0,0) point.
-    int width, height;
+    float initialX, initialY;  // acts
+    // as the (0,0) point.
+    short width, height;  //short is like int
     Bitmap ballBitmap;
 
     Bitmap centerBitmap;
+
+    byte quarter;
 
 
 
@@ -26,15 +28,15 @@ public class Ball
 
     public Ball (Resources res, float ratioX, float ratioY, float screenX, float screenY)
     {
-        this.screenY = screenY;
-        final float ratioToScale = ratioY * ratioX; /********/
+        final float ratioToScale = Math.max(screenY/1920, screenX/1080); // find the biggest difference in ratio to scale so that the ball is equally sized
 
-        x = (int) (screenX / 2); // 1/8 to the right
+
+        x = (int) (screenX / 2);             // 1/8 to the right
         y = (int) (screenY - screenY / 2); // 1 - 1/3.5 up
 
 
-        width = (int) (300 * ratioToScale);
-        height = (int) (300 * ratioToScale);
+        width = (short) (90 * ratioToScale);
+        height = (short) (90 * ratioToScale);
 
         initialX = x + width/2f;
         initialY = y + height/2f;
@@ -63,11 +65,11 @@ public class Ball
     public void setPosition (float x, float y)
     {
         this.x = x - width /2f;
-        this.y = /*screenY -*/ y - height /2f;
+        this.y = y - height /2f;
     }
 
     public float angle(float Tx, float Ty) // T - Touch point || * returns a radian
-    {return (float) (Math.atan2(initialY - Ty, initialX - Tx));} // issue NO.2
+    {return (float) (Math.atan2(initialY - (Ty + height/2f), initialX - (Tx + width/2f)));} // discussion: "degrees vs radians"
 
 
     double calcDistance (float x, float y)
@@ -81,9 +83,6 @@ public class Ball
 
         return 0;
     }
-
-
-
 
 
 
