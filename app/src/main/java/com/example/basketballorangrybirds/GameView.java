@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
@@ -14,6 +15,8 @@ public class GameView extends SurfaceView implements Runnable
     private Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
     private final int maxDistBallToInitial;   // is the radius of the circle which determines max dist. between b - ball and i - initial points
     private float perpOpp, perpAdj;
+    private float angle_of_touch;
+    boolean isOnEdge;
     // General
 
 
@@ -38,7 +41,8 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-    public GameView(GameActivity activity, int screenX,  int screenY) {
+    public GameView(GameActivity activity, int screenX,  int screenY)
+    {
         super(activity);
 
         this.activity = activity;
@@ -100,7 +104,9 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint);
 
 
-            float angle_of_touch = ball.angle(ball.x, ball.y);
+
+
+
 
 
 
@@ -109,28 +115,26 @@ public class GameView extends SurfaceView implements Runnable
             {
                 case 1:
                     screenCanvas.drawLine(ball.x + fixLineToBall(),ball.y + ball.height - fixLineToBall(),
-                            ball.initialX/* - perpAdj - fixX()*/,ball.initialY/* + perpOpp + fixY()*/, paint);
+                            ball.initialX - perpAdj - fixX(),ball.initialY + perpOpp + fixY(), paint);
                     break;
 
                 case 2:
                     screenCanvas.drawLine(ball.x + ball.width - fixLineToBall(),ball.y + ball.height - fixLineToBall(),
-                            ball.initialX/* + perpAdj + fixX()*/,ball.initialY/* + perpOpp + fixY()*/, paint);
+                            ball.initialX + perpAdj + fixX(),ball.initialY + perpOpp + fixY(), paint);
                     break;
 
                 case 3:
                     screenCanvas.drawLine(ball.x + ball.width - fixLineToBall(),ball.y + fixLineToBall(),
-                            ball.initialX/* + perpAdj + fixX()*/,ball.initialY/* - perpOpp - fixY()*/, paint);
+                            ball.initialX + perpAdj + fixX(),ball.initialY - perpOpp - fixY(), paint);
                     break;
 
                 case 4:
                     screenCanvas.drawLine(ball.x + fixLineToBall(), ball.y + fixLineToBall(),
-                            ball.initialX/* - perpAdj*/,ball.initialY/* - perpOpp*/, paint);
+                            ball.initialX - perpAdj,ball.initialY - perpOpp, paint);
                     break;
             }
-
             // TODO: 05/10/2022
             // make the line connect to the ball at the RIGHT angle from i
-
 
 
 
@@ -162,93 +166,82 @@ public class GameView extends SurfaceView implements Runnable
     @Override
     public boolean onTouchEvent (MotionEvent event) // this is a method that helps me detect touch.
     {
-
         switch (event.getAction()) // down/move/up
-        {
+            {
+
             case MotionEvent.ACTION_DOWN:// started touch
 
                 if (ball.isTouching(event.getX(),event.getY()))
-                    ball.setActionDown(true);
-                // 'ball' has a boolean method that indicates whether the object is touched.
-
-
+                    ball.setActionDown(true);                   // 'ball' has a boolean method that indicates whether the object is touched.
                 break;
-
-
 
 
 
             case MotionEvent.ACTION_MOVE:
             {
-                if (ball.getActionDown())
-                {// if touched the ball
 
-                    float angle_of_touch = ball.angle(event.getX(), event.getY());
-
-//                    Log.d("key1121 angle", "" + 180/Math.PI * angle_of_touch);
-
+                if (ball.getActionDown()) // if touched the ball
+                {
+                    angle_of_touch = ball.angle(event.getX(), event.getY());
 
                     if (Math.abs(180 / Math.PI * angle_of_touch) >= 90)
-                    {
+
                         if (180 / Math.PI * angle_of_touch >= 0)
                             setBallQuarter((byte) 1); // top right corner
+
                         else
                             setBallQuarter((byte) 4); // bottom right corner
-                    }
+
                     else
-                    {
+
                         if (180 / Math.PI * angle_of_touch >= 0)
                             setBallQuarter((byte) 2); // top left corner
+
                         else
                             setBallQuarter((byte) 3); // bottom left corner
-                    }
-
-
 
 
 
 
                     if (ball.calcDistance(event.getX(), event.getY()) < maxDistBallToInitial) // in drag-able circle
+                    {
                         ball.setPosition(event.getX(), event.getY());
+                        isOnEdge = false;
+                    }
 
 
 
 
-
-
-                    else {// issue NO.4   ||   finger drag outside of radius
-
-                        // hypo- hypotenuse (יתר) , perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
+                    else // issue NO.4   ||   finger drag outside of radius
+                    {   //  perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
 
                         perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * maxDistBallToInitial);
                         perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * maxDistBallToInitial);
 
+                        Log.d("KEY1121 perp", perpOpp + " <-opp ||| adj-> " + perpAdj );
 
 
                         switch (ball.quarter)
                         {
-                            case 1: ball.setPosition(ball.initialX + perpAdj, ball.initialY - perpOpp); //
-                                break;
+                            case 1: ball.setPosition(ball.initialX + perpAdj, ball.initialY - perpOpp); break;
 
-                            case 2: ball.setPosition(ball.initialX - perpAdj, ball.initialY - perpOpp); //
-                                break;
+                            case 2: ball.setPosition(ball.initialX - perpAdj, ball.initialY - perpOpp); break;
 
-                            case 3: ball.setPosition(ball.initialX - perpAdj, ball.initialY + perpOpp); //
-                                break;
+                            case 3: ball.setPosition(ball.initialX - perpAdj, ball.initialY + perpOpp); break;
 
-                            case 4: ball.setPosition(ball.initialX + perpAdj, ball.initialY + perpOpp); //
-                                break;
+                            case 4: ball.setPosition(ball.initialX + perpAdj, ball.initialY + perpOpp); break;
                         }
 
-                    }//outside drag-able circle
 
-                }//ball.getActionDown()
+                        isOnEdge = true;
 
-//                Log.d("KEY1121 qtr", ball.quarter+ "" );
 
+                    }// outside drag-able circle
+                }// if touched the ball
             }//ACTION_MOVE
 
             break;
+
 
             case MotionEvent.ACTION_UP: // end of touch
                 ball.setActionDown(false);
@@ -294,3 +287,4 @@ public class GameView extends SurfaceView implements Runnable
         catch (InterruptedException e) {e.printStackTrace();}
     }
 }
+

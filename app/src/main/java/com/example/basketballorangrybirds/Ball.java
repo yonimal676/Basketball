@@ -19,6 +19,9 @@ public class Ball
     byte quarter;
 
 
+    public final float RADIUS;
+
+
 
 
     public final int WEIGHT = 620; // grams
@@ -37,6 +40,8 @@ public class Ball
 
         width = (short) (90 * ratioToScale);
         height = (short) (90 * ratioToScale);
+
+        RADIUS = width / 2f; // or height, it doesn't matter as long as they're equal.
 
         initialX = x + width/2f;
         initialY = y + height/2f;
@@ -76,7 +81,14 @@ public class Ball
     {return Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));} // this is the distance function
 
 
+    float m () // slope of initial point to ball point.
+    {return -1 * (initialY - (y+height/2f)) / (initialX - (x+width/2f));}
 
+    public String functionItoB ()
+    {
+       float num = m() * initialX - initialY;
+       return "y="+m()+"x"+num;
+    }
 
     public int Formula (int x, int y)
     {
