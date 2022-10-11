@@ -5,37 +5,36 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
-public class GameView extends SurfaceView implements Runnable
+import java.util.Timer;
+
+public class GameView
+        extends SurfaceView implements Runnable
 {
 
     private Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
-    private final int maxDistBallToInitial;   // is the radius of the circle which determines max dist. between b - ball and i - initial points
+    private final int maxDistBallToInitial; // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
     private float angle_of_touch;
     boolean isOnEdge;
     // General
 
 
-
     private Background background;
     private Ball ball;
-    private Precursor precursor;
     private Player player;
     private Basket basket;
     // Objects
 
-    private final int screenX , screenY;    // notice that
+    private final int screenX , screenY;
     private final float ratioX , ratioY;
     private final byte SLEEP_MILLIS = 16; // byte is like int
     private boolean isPlaying;
     private Thread thread;
     private final GameActivity activity;
     private final Context gameActivityContext;
-
     // Technical stuff
 
 
@@ -54,39 +53,48 @@ public class GameView extends SurfaceView implements Runnable
         ratioX = 1080f / screenX; // side to side
         ratioY = 1920f / screenY; // top to bottom
 
-        background = new Background(getResources(), screenX, screenY);
-        ball = new Ball(getResources(), ratioX, ratioY, screenX, screenY);
 
         isPlaying = true;
 
-        maxDistBallToInitial = (int) (300 * ratioX * ratioY);
 
-        precursor = new Precursor();
+
+        background = new Background(getResources(), screenX, screenY);
+
+        ball = new Ball(getResources(), ratioX, ratioY, screenX, screenY);
+        maxDistBallToInitial = (int) (200 * ratioX * ratioY); // the radius of max dist of the ball from the initial position
+
+
 
         paint = new Paint();
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL_AND_STROKE);
         paint.setPathEffect(new DashPathEffect(new float[]{30, 30}, 0)); // array of ON and OFF distances,
         paint.setStrokeWidth(6f);
-
+        // ↑ → This segment is for the precursor of the throw.
     }
 
 
 
 
     @Override
-    public void run() {
-        while (isPlaying) { // because we don't want to run the app if we don't play.
+    public void run()
+    {
+        while (isPlaying)
+        { // run only if we play.
+
             update();//The screen
             draw();//The components
             sleep();//To render
         }
     }
 
+
+
     public void update ()
     {
         //ball.Formula(x,y,velocity)
     }
+
 
 
 
@@ -97,44 +105,41 @@ public class GameView extends SurfaceView implements Runnable
 
 
             screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint);
+
+
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
-            screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
+//            screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
+//            screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint);
 
 
-            screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint);
-
-
-
-
-
-
-
+            //discussion: X and Y of stop screenCanvas.DrawLine #15
+            float lineStopX = (float) Math.abs((Math.cos(ball.angle) * ball.width/2f)) // ball.width/2f serves as radius
+                    , lineStopY =  (float) Math.abs((Math.sin(ball.angle) * ball.width/2f));
 
 
             switch (ball.quarter)
             {
                 case 1:
-                    screenCanvas.drawLine(ball.x + fixLineToBall(),ball.y + ball.height - fixLineToBall(),
-                            ball.initialX - perpAdj - fixX(),ball.initialY + perpOpp + fixY(), paint);
+                    screenCanvas.drawLine(ball.x+fixX() - lineStopX,ball.y+fixY() + lineStopY,
+                            ball.initialX - perpAdj,ball.initialY + perpOpp, paint);
                     break;
 
                 case 2:
-                    screenCanvas.drawLine(ball.x + ball.width - fixLineToBall(),ball.y + ball.height - fixLineToBall(),
-                            ball.initialX + perpAdj + fixX(),ball.initialY + perpOpp + fixY(), paint);
+                    screenCanvas.drawLine(ball.x+fixX() + lineStopX,ball.y+fixY() + lineStopY,
+                            ball.initialX + perpAdj,ball.initialY + perpOpp, paint);
                     break;
 
                 case 3:
-                    screenCanvas.drawLine(ball.x + ball.width - fixLineToBall(),ball.y + fixLineToBall(),
-                            ball.initialX + perpAdj + fixX(),ball.initialY - perpOpp - fixY(), paint);
+                    screenCanvas.drawLine(ball.x+fixX() + lineStopX,ball.y+fixY() - lineStopY,
+                            ball.initialX + perpAdj,ball.initialY - perpOpp, paint);
                     break;
 
                 case 4:
-                    screenCanvas.drawLine(ball.x + fixLineToBall(), ball.y + fixLineToBall(),
+                    screenCanvas.drawLine(ball.x+fixX() - lineStopX, ball.y+fixY() - lineStopY,
                             ball.initialX - perpAdj,ball.initialY - perpOpp, paint);
                     break;
             }
-            // TODO: 05/10/2022
-            // make the line connect to the ball at the RIGHT angle from i
+            // TODO: make the line connect to the ball at the RIGHT angle from i
 
 
 
@@ -143,62 +148,74 @@ public class GameView extends SurfaceView implements Runnable
     }
 
 
+
+
+
     private void sleep() {
         try { Thread.sleep(SLEEP_MILLIS); }// = 16
         catch (InterruptedException e) {e.printStackTrace();}
     }
 
 
+
+
     public void setBallQuarter(byte qtr)
     {ball.quarter = qtr;}
 
 
-    public float fixLineToBall() // issue: correcting the line with the ball #13
-    {return (float) (Math.tan(22.5) * ball.width/2 / Math.sqrt(2));}
-
     public float fixX()
     {return ball.width/2f;}
 
+
     public float fixY()
     {return ball.height/2f;}
+
+
+
 
 
     @Override
     public boolean onTouchEvent (MotionEvent event) // this is a method that helps me detect touch.
     {
         switch (event.getAction()) // down/move/up
-            {
+        {
 
             case MotionEvent.ACTION_DOWN:// started touch
 
                 if (ball.isTouching(event.getX(),event.getY()))
                     ball.setActionDown(true);                   // 'ball' has a boolean method that indicates whether the object is touched.
+
                 break;
 
 
 
-            case MotionEvent.ACTION_MOVE:
+            case MotionEvent.ACTION_MOVE: // pressed and moving
             {
 
                 if (ball.getActionDown()) // if touched the ball
                 {
-                    angle_of_touch = ball.angle(event.getX(), event.getY());
+
+                    angle_of_touch = ball.findAngle(event.getX(), event.getY()); // also sets ball.angle
+
+
+
 
                     if (Math.abs(180 / Math.PI * angle_of_touch) >= 90)
-
+                    {
                         if (180 / Math.PI * angle_of_touch >= 0)
                             setBallQuarter((byte) 1); // top right corner
-
                         else
                             setBallQuarter((byte) 4); // bottom right corner
+                    }
 
                     else
-
+                    {
                         if (180 / Math.PI * angle_of_touch >= 0)
                             setBallQuarter((byte) 2); // top left corner
 
                         else
                             setBallQuarter((byte) 3); // bottom left corner
+                    }
 
 
 
@@ -206,19 +223,21 @@ public class GameView extends SurfaceView implements Runnable
                     if (ball.calcDistance(event.getX(), event.getY()) < maxDistBallToInitial) // in drag-able circle
                     {
                         ball.setPosition(event.getX(), event.getY());
-                        isOnEdge = false;
+//                        pullin =
                     }
 
 
 
 
-                    else // issue NO.4   ||   finger drag outside of radius
-                    {   //  perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
+                    else // issue: finger drag outside of radius #4
+                    {
+//                        pulling = 75.6 kmh
 
-                        perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * maxDistBallToInitial);
-                        perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * maxDistBallToInitial);
 
-                        Log.d("KEY1121 perp", perpOpp + " <-opp ||| adj-> " + perpAdj );
+                        perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * maxDistBallToInitial); // for y
+                        perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * maxDistBallToInitial); // for x
+                        //  perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
+
 
 
                         switch (ball.quarter)
@@ -233,6 +252,7 @@ public class GameView extends SurfaceView implements Runnable
                         }
 
 
+
                         isOnEdge = true;
 
 
@@ -243,27 +263,39 @@ public class GameView extends SurfaceView implements Runnable
             break;
 
 
-            case MotionEvent.ACTION_UP: // end of touch
+
+            case MotionEvent.ACTION_UP: // ended touch
+
                 ball.setActionDown(false);
 
+                Timer timer = new Timer(); // or something like this.
 
 
-                /*long start = System.nanoTime();
-                if (start >= 1000)
-                {
-                    long elapsedTime = System.nanoTime() - start;
-                    Log.d("key1121 time", "elapsedTime: " + elapsedTime);
-                }
-*/
                 // start timer for calculating the speed of the ball.
                 break;
+
         }
+
+
         return true;
     }
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    // general functions
 
 
 
@@ -285,6 +317,13 @@ public class GameView extends SurfaceView implements Runnable
 //            activity.PauseMenu();
         }
         catch (InterruptedException e) {e.printStackTrace();}
+    }
+
+
+
+
+    public Context getGameActivityContext() {
+        return gameActivityContext;
     }
 }
 
