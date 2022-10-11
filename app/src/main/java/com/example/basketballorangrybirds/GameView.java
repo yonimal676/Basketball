@@ -17,9 +17,9 @@ public class GameView
 
 
     private final Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
+    private final Paint paint2;            // The paint is the thing that "draws"//
     private final int maxBallPull; // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
-    boolean isOnEdge;
     // General
 
 
@@ -63,7 +63,7 @@ public class GameView
         ball = new Ball(getResources(), ratioX, ratioY, screenX, screenY);
 
 
-        maxBallPull = (int) (200 * ratioX * ratioY); // the radius of max dist of the ball from the initial position
+        maxBallPull = (int) (250 * ratioX * ratioY); // the radius of max dist of the ball from the initial position
 
 
 
@@ -73,6 +73,16 @@ public class GameView
         paint.setPathEffect(new DashPathEffect(new float[]{30, 30}, 0)); // array of ON and OFF distances,
         paint.setStrokeWidth(6f);
         // ↑  This segment is for the precursor of the throw.
+
+
+
+        //paint for showing axis:
+        paint2 = new Paint();
+        paint2.setColor(Color.BLACK);
+        paint2.setStyle(Paint.Style.FILL);
+        paint2.setStrokeWidth(6f);
+        // ↑  This segment is for the precursor of the throw.
+
     }
 
 
@@ -87,6 +97,7 @@ public class GameView
             update();//The screen
             draw();//The components
             sleep();//To render
+
         }
     }
 
@@ -108,61 +119,66 @@ public class GameView
 
             screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint);
 
-
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
-            screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
 
 //          SHOW AXIS:
-            screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint);
-            screenCanvas.drawLine(ball.initialX,0,ball.initialX,screenY, paint);
+            screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint2);
+            screenCanvas.drawLine(ball.initialX,0,ball.initialX,screenY, paint2);
+
+
+
+//            Log.d("key123123 MAX POINT",  ball.range /2f + " <- x ||| y -> " + ball.max_height);
+            screenCanvas.drawBitmap(ball.centerBitmap,ball.initialX + ball.range/2f, ball.initialY - ball.max_height, paint);
+
 
 
 
             //discussion: X and Y of stop screenCanvas.DrawLine #15
-
-            if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.radius) {
+            if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.radius) // line should only be drawn outside of the ball
+            {
                 ball.lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.radius));
                 ball.lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.radius));
+                // issue: correcting the line with the ball #13
 
 
-            switch (ball.quarter) // draw a line to the opposite corner
-            {
-                case 1:
-                    screenCanvas.drawLine(
-                            ball.x + fixX() - ball.lineStopX,
-                            ball.y + fixY() + ball.lineStopY,
-                            ball.initialX - (ball.x - ball.initialX),
-                            ball.initialY + (ball.initialY-ball.y),
-                            paint);
-                    break;
+                switch (ball.quarter) // draw a line to the opposite corner
+                {
+                    case 1:
+                        screenCanvas.drawLine(
+                                ball.x + fixX() - ball.lineStopX,
+                                ball.y + fixY() + ball.lineStopY,
+                                ball.initialX - (ball.x - ball.initialX) - fixX(),
+                                ball.initialY + (ball.initialY-ball.y) - fixY(),
+                                paint);
+                        break;
 
-                case 2:
-                    screenCanvas.drawLine(
-                            ball.x + fixX() + ball.lineStopX,
-                            ball.y + fixY() + ball.lineStopY,
-                            ball.initialX + (ball.initialX - ball.x),
-                            ball.initialY + (ball.initialY - ball.y),
-                            paint);
-                    break;
+                    case 2:
+                        screenCanvas.drawLine(
+                                ball.x + fixX() + ball.lineStopX,
+                                ball.y + fixY() + ball.lineStopY,
+                                ball.initialX + (ball.initialX - ball.x) - fixX(),
+                                ball.initialY + (ball.initialY - ball.y) - fixY(),
+                                paint);
+                        break;
 
-                case 3:
-                    screenCanvas.drawLine(
-                            ball.x + fixX() + ball.lineStopX,
-                            ball.y + fixY() - ball.lineStopY,
-                            ball.initialX + (ball.initialX - ball.x),
-                            ball.initialY - (ball.y - ball.initialY),
-                            paint);
-                    break;
+                    case 3:
+                        screenCanvas.drawLine(
+                                ball.x + fixX() + ball.lineStopX,
+                                ball.y + fixY() - ball.lineStopY,
+                                ball.initialX + (ball.initialX - ball.x) - fixX(),
+                                ball.initialY - (ball.y - ball.initialY) - fixY(),
+                                paint);
+                        break;
 
-                case 4:
-                    screenCanvas.drawLine(
-                            ball.x + fixX() - ball.lineStopX,
-                            ball.y + fixY() - ball.lineStopY,
-                            ball.initialX - (ball.x - ball.initialX),
-                            ball.initialY - (ball.y - ball.initialY),
-                            paint);
-                    break;
-            }
+                    case 4:
+                        screenCanvas.drawLine(
+                                ball.x + fixX() - ball.lineStopX,
+                                ball.y + fixY() - ball.lineStopY,
+                                ball.initialX - (ball.x - ball.initialX) - fixX(),
+                                ball.initialY - (ball.y - ball.initialY) - fixY(),
+                                paint);
+                        break;
+                } // How do humans know which mushrooms are safe to eat? Trial and error, my friend.
 
             }
 
@@ -242,18 +258,12 @@ public class GameView
 
 
                     if (ball.calcDistanceFromI(event.getX(), event.getY()) < maxBallPull) // in drag-able circle
-                    {
                         ball.setPosition(event.getX(), event.getY());
-//                        pullin =
-                    }
-
 
 
 
                     else // issue: finger drag outside of radius #4
                     {
-//                        pulling = 75.6 kmh
-
 
                         perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * maxBallPull); // for y
                         perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * maxBallPull); // for x
@@ -274,13 +284,12 @@ public class GameView
 
 
 
-                        isOnEdge = true;
-
 
                     }// outside drag-able circle
-                    Log.d("quarter", "" + ball.quarter);
+//                    Log.d("quarter", "" + ball.quarter);
 
                 }// if touched the ball
+
 
             }//ACTION_MOVE
 
@@ -290,7 +299,13 @@ public class GameView
 
             case MotionEvent.ACTION_UP: // ended touch
 
+                Log.d("ANGLE", "" + -1 * Math.toDegrees(ball.ballAngle()));
+
+                pullToVelocity(ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()));
+                Log.d("VELOCITY", "" + ball.velocity);
+
                 ball.setActionDown(false);
+
 
                 Timer timer = new Timer(); // or something like this.
 
@@ -320,6 +335,11 @@ public class GameView
 
     /////////////////////////////////////////////////////////////////////////
     // general functions
+
+
+    public void pullToVelocity (float pullDistance) // percent of distance from max distance will result in the velocity.
+    {ball.velocity = (pullDistance / maxBallPull) * ball.MAX_VELOCITY;
+    ball.formulas();}
 
 
 

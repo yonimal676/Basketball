@@ -4,6 +4,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
+import android.util.Log;
 
 public class Ball
 {
@@ -27,17 +28,30 @@ public class Ball
 
 
 
-    final float WEIGHT = 0.62f; // kilo
-    final float GRAVITY = 9.807f;
-    float V, Vx, Vy; // max:  21 meters per second || 75.6 kmh
-    float t;
+    final float WEIGHT; // kilo
+
+    final float GRAVITY;
+
+    float velocity, velocityX, velocityY; //VELOCITY
+
+    float MAX_VELOCITY; //kmh
+
+    float time;
+
+    float max_height;
+
+    float range;
+
+    float HEIGHT;
     // acceleration = 0.
 
+    float PIXEL_TO_METER_RATIO; // discussion: Pixels to meters #19
 
 
-    public Ball (Resources res, float ratioX, float ratioY, float screenX, float screenY)
-    {
-        final float ratioToScale = Math.max(screenY/1920, screenX/1080); // find the biggest difference in ratio to scale so that the ball is equally sized
+
+
+    public Ball (Resources res, float ratioX, float ratioY, float screenX, float screenY) {
+        final float ratioToScale = Math.max(screenY / 1920, screenX / 1080); // find the biggest difference in ratio to scale so that the ball is equally sized
 
 
         x = (int) (screenX / 8);             // 1/8 to the right
@@ -47,18 +61,27 @@ public class Ball
         width = (short) (50 * ratioToScale);
         height = (short) (50 * ratioToScale);
 
-        radius = width /2f;
+        radius = width / 2f;
 
 
-        initialX = x + width/2f;
-        initialY = y + height/2f;
+        initialX = x + width / 2f;
+        initialY = y + height / 2f;
 
 
         ballBitmap = BitmapFactory.decodeResource(res, R.drawable.basketball);
         ballBitmap = Bitmap.createScaledBitmap(ballBitmap, width, height, false);
 
         centerBitmap = BitmapFactory.decodeResource(res, R.drawable.black);
-        centerBitmap = Bitmap.createScaledBitmap(centerBitmap,10,10,false);
+        centerBitmap = Bitmap.createScaledBitmap(centerBitmap, 10, 10, false);
+
+
+        PIXEL_TO_METER_RATIO = 139.34425f;
+        GRAVITY = 9.8f;
+        WEIGHT = 0.62f;
+        MAX_VELOCITY = 75.6f;
+        HEIGHT = (screenY - (y + height/2f)) / PIXEL_TO_METER_RATIO;
+
+//        Log.d("key1903311" , "" + (screenY - initialY) / 1.83f);
 
     }
 
@@ -91,8 +114,8 @@ public class Ball
 
 
 
-    double calcDistanceFromI(float x, float y)
-    {return Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));} // this is the distance function
+    float calcDistanceFromI(float x, float y)
+    {return (float) Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));} // this is the distance function
 
 
 
@@ -100,6 +123,48 @@ public class Ball
     {return (initialY - (y+height/2f)) / (initialX - (x+width/2f));}
 
 
+    void formulas () // velocity had already been calculated in GameView.pullToVelocity()
+    {
+        velocityX = (float) Math.abs(Math.cos(-1 * Math.toDegrees(ballAngle())) * velocity);
+        velocityY = (float) Math.abs(Math.sin(-1 * Math.toDegrees(ballAngle())) * velocity);
+
+
+        time = (float) ((velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY);
+
+
+        max_height = HEIGHT + ( velocityY * velocityY / (2 * GRAVITY)) / PIXEL_TO_METER_RATIO;
+
+
+        range = (float) ((velocityX * (velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY)) / PIXEL_TO_METER_RATIO;
+
+
+
+
+
+
+
+        Log.d("key19033 VELOCITY axis",velocityX + " <- x || y -> "+ velocityY + " ||  VELOCITY: " + velocity);
+
+    /*    Log.d("key19033 time",time + "");
+
+        Log.d("key19033 HEIGHT112",HEIGHT + "");
+
+        Log.d("key19033 max height",max_height + "");
+
+        Log.d("key19033 range",range + "");*/
+
+    }
+
+    // WITH ELEVATION OF 1.83m
+
+    //Horizontal velocity component: Vx = V * cos(α)
+    //Vertical velocity component: Vy = V * sin(α)
+
+    //Time of flight: t = [Vy + √(Vy² + 2 * g * h)] / g
+
+    //Maximum height: max_height = h + Vy² / (2 * g)
+
+    //Range of the projectile: R = Vx * [Vy + √(Vy² + 2 * g * h)] / g
 }
 
 
