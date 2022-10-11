@@ -14,10 +14,9 @@ public class GameView
         extends SurfaceView implements Runnable
 {
 
-    private Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
+    private final Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
     private final int maxDistBallToInitial; // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
-    private float angle_of_touch;
     boolean isOnEdge;
     // General
 
@@ -54,8 +53,11 @@ public class GameView
         ratioY = 1920f / screenY; // top to bottom
 
 
-        isPlaying = true;
 
+
+
+
+        isPlaying = true;
 
 
         background = new Background(getResources(), screenX, screenY);
@@ -108,40 +110,59 @@ public class GameView
 
 
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
-//            screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
-//            screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint);
+            screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
+
+/*          SHOW AXIS:
+            screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint);
+            screenCanvas.drawLine(ball.initialX,0,ball.initialX,screenY, paint);*/
+
 
 
             //discussion: X and Y of stop screenCanvas.DrawLine #15
-            float lineStopX = (float) Math.abs((Math.cos(ball.angle) * ball.width/2f)) // ball.width/2f serves as radius
-                    , lineStopY =  (float) Math.abs((Math.sin(ball.angle) * ball.width/2f));
+            float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.width/2f)) // ball.width/2f serves as radius
+                    , lineStopY =  (float) Math.abs((Math.sin(ball.ballAngle()) * ball.width/2f));
 
 
-            switch (ball.quarter)
+            float fixedX = ball.x+fixX(), fixedY = ball.y+fixY(); //the coordinates of the middle of the ball.
+
+            switch (ball.quarter) // draw a line to the opposite corner
             {
                 case 1:
-                    screenCanvas.drawLine(ball.x+fixX() - lineStopX,ball.y+fixY() + lineStopY,
-                            ball.initialX - perpAdj,ball.initialY + perpOpp, paint);
+                    screenCanvas.drawLine(
+                            fixedX - lineStopX,
+                            fixedY + lineStopY,
+                            ball.initialX - (ball.x - ball.initialX),
+                            ball.initialY + (ball.initialY-ball.y),
+                            paint);
                     break;
 
                 case 2:
-                    screenCanvas.drawLine(ball.x+fixX() + lineStopX,ball.y+fixY() + lineStopY,
-                            ball.initialX + perpAdj,ball.initialY + perpOpp, paint);
+                    screenCanvas.drawLine(
+                            fixedX+ lineStopX,
+                            fixedY + lineStopY,
+                            ball.initialX + (ball.initialX - ball.x),
+                            ball.initialY + (ball.initialY - ball.y),
+                            paint);
                     break;
 
                 case 3:
-                    screenCanvas.drawLine(ball.x+fixX() + lineStopX,ball.y+fixY() - lineStopY,
-                            ball.initialX + perpAdj,ball.initialY - perpOpp, paint);
+                    screenCanvas.drawLine(
+                            fixedX + lineStopX,
+                            fixedY - lineStopY,
+                            ball.initialX + (ball.initialX - ball.x),
+                            ball.initialY - (ball.y - ball.initialY),
+                            paint);
                     break;
 
                 case 4:
-                    screenCanvas.drawLine(ball.x+fixX() - lineStopX, ball.y+fixY() - lineStopY,
-                            ball.initialX - perpAdj,ball.initialY - perpOpp, paint);
+                    screenCanvas.drawLine(
+                            fixedX - lineStopX,
+                            fixedY - lineStopY,
+                            ball.initialX - (ball.x - ball.initialX),
+                            ball.initialY - (ball.y - ball.initialY),
+                            paint);
                     break;
             }
-            // TODO: make the line connect to the ball at the RIGHT angle from i
-
-
 
             getHolder().unlockCanvasAndPost(screenCanvas);
         }
@@ -195,9 +216,7 @@ public class GameView
                 if (ball.getActionDown()) // if touched the ball
                 {
 
-                    angle_of_touch = ball.findAngle(event.getX(), event.getY()); // also sets ball.angle
-
-
+                    float angle_of_touch = ball.findAngleWhenOutside(event.getX(), event.getY()); // also sets ball.angle
 
 
                     if (Math.abs(180 / Math.PI * angle_of_touch) >= 90)

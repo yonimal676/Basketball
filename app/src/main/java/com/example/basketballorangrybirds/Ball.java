@@ -21,8 +21,6 @@ public class Ball
 
     byte quarter;
 
-    float angle;
-
 
 
 
@@ -79,11 +77,13 @@ public class Ball
     }
 
 
-    float findAngle(float Tx, float Ty) // T - Touch point || * returns a radian
-    {
-        this.angle = (float) (Math.atan2(initialY - (Ty + height/2f), initialX - (Tx + width/2f)));
-        return (float) (Math.atan2(initialY - (Ty + height/2f), initialX - (Tx + width/2f)));
-    } // discussion: "degrees vs radians"
+    float findAngleWhenOutside(float Tx, float Ty) // T - Touch point || * returns a radian
+    {return (float) (Math.atan2(initialY - (Ty + height/2f), initialX - (Tx + width/2f)));} // discussion: "degrees vs radians"
+
+
+    float ballAngle() // the previous method isn't sufficient bc it updates only when touch is outside max dist.
+    {return (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));}
+
 
 
     double calcDistance (float x, float y)
@@ -93,24 +93,6 @@ public class Ball
 
     float m () // slope of initial point to ball point.
     {return -1 * (initialY - (y+height/2f)) / (initialX - (x+width/2f));}
-
-
-
-
-    String functionItoB ()
-    {
-        float num = m() * initialX - initialY;
-        return "y="+m()+"x"+num;
-    }
-
-
-
-    public int Formula (int x, int y)
-    {
-
-        return 0;
-    }
-
 
 
 }
