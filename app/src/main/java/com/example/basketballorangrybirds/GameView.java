@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
@@ -14,8 +15,9 @@ public class GameView
         extends SurfaceView implements Runnable
 {
 
+
     private final Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
-    private final int maxDistBallToInitial; // radius of the circle which determines max dist. ball from initial point
+    private final int maxBallPull; // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
     boolean isOnEdge;
     // General
@@ -53,17 +55,15 @@ public class GameView
         ratioY = 1920f / screenY; // top to bottom
 
 
-
-
-
-
         isPlaying = true;
 
 
         background = new Background(getResources(), screenX, screenY);
 
         ball = new Ball(getResources(), ratioX, ratioY, screenX, screenY);
-        maxDistBallToInitial = (int) (200 * ratioX * ratioY); // the radius of max dist of the ball from the initial position
+
+
+        maxBallPull = (int) (200 * ratioX * ratioY); // the radius of max dist of the ball from the initial position
 
 
 
@@ -72,7 +72,7 @@ public class GameView
         paint.setStyle(Paint.Style.FILL_AND_STROKE);
         paint.setPathEffect(new DashPathEffect(new float[]{30, 30}, 0)); // array of ON and OFF distances,
         paint.setStrokeWidth(6f);
-        // ↑ → This segment is for the precursor of the throw.
+        // ↑  This segment is for the precursor of the throw.
     }
 
 
@@ -112,25 +112,25 @@ public class GameView
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
             screenCanvas.drawBitmap(ball.centerBitmap, ball.initialX,ball.initialY , paint);
 
-/*          SHOW AXIS:
+//          SHOW AXIS:
             screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint);
-            screenCanvas.drawLine(ball.initialX,0,ball.initialX,screenY, paint);*/
+            screenCanvas.drawLine(ball.initialX,0,ball.initialX,screenY, paint);
 
 
 
             //discussion: X and Y of stop screenCanvas.DrawLine #15
-            float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.width/2f)) // ball.width/2f serves as radius
-                    , lineStopY =  (float) Math.abs((Math.sin(ball.ballAngle()) * ball.width/2f));
 
+            if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.radius) {
+                ball.lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.radius));
+                ball.lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.radius));
 
-            float fixedX = ball.x+fixX(), fixedY = ball.y+fixY(); //the coordinates of the middle of the ball.
 
             switch (ball.quarter) // draw a line to the opposite corner
             {
                 case 1:
                     screenCanvas.drawLine(
-                            fixedX - lineStopX,
-                            fixedY + lineStopY,
+                            ball.x + fixX() - ball.lineStopX,
+                            ball.y + fixY() + ball.lineStopY,
                             ball.initialX - (ball.x - ball.initialX),
                             ball.initialY + (ball.initialY-ball.y),
                             paint);
@@ -138,8 +138,8 @@ public class GameView
 
                 case 2:
                     screenCanvas.drawLine(
-                            fixedX+ lineStopX,
-                            fixedY + lineStopY,
+                            ball.x + fixX() + ball.lineStopX,
+                            ball.y + fixY() + ball.lineStopY,
                             ball.initialX + (ball.initialX - ball.x),
                             ball.initialY + (ball.initialY - ball.y),
                             paint);
@@ -147,8 +147,8 @@ public class GameView
 
                 case 3:
                     screenCanvas.drawLine(
-                            fixedX + lineStopX,
-                            fixedY - lineStopY,
+                            ball.x + fixX() + ball.lineStopX,
+                            ball.y + fixY() - ball.lineStopY,
                             ball.initialX + (ball.initialX - ball.x),
                             ball.initialY - (ball.y - ball.initialY),
                             paint);
@@ -156,13 +156,16 @@ public class GameView
 
                 case 4:
                     screenCanvas.drawLine(
-                            fixedX - lineStopX,
-                            fixedY - lineStopY,
+                            ball.x + fixX() - ball.lineStopX,
+                            ball.y + fixY() - ball.lineStopY,
                             ball.initialX - (ball.x - ball.initialX),
                             ball.initialY - (ball.y - ball.initialY),
                             paint);
                     break;
             }
+
+            }
+
 
             getHolder().unlockCanvasAndPost(screenCanvas);
         }
@@ -226,7 +229,6 @@ public class GameView
                         else
                             setBallQuarter((byte) 4); // bottom right corner
                     }
-
                     else
                     {
                         if (180 / Math.PI * angle_of_touch >= 0)
@@ -239,7 +241,7 @@ public class GameView
 
 
 
-                    if (ball.calcDistance(event.getX(), event.getY()) < maxDistBallToInitial) // in drag-able circle
+                    if (ball.calcDistanceFromI(event.getX(), event.getY()) < maxBallPull) // in drag-able circle
                     {
                         ball.setPosition(event.getX(), event.getY());
 //                        pullin =
@@ -253,8 +255,8 @@ public class GameView
 //                        pulling = 75.6 kmh
 
 
-                        perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * maxDistBallToInitial); // for y
-                        perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * maxDistBallToInitial); // for x
+                        perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * maxBallPull); // for y
+                        perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * maxBallPull); // for x
                         //  perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
 
 
@@ -276,7 +278,10 @@ public class GameView
 
 
                     }// outside drag-able circle
+                    Log.d("quarter", "" + ball.quarter);
+
                 }// if touched the ball
+
             }//ACTION_MOVE
 
             break;

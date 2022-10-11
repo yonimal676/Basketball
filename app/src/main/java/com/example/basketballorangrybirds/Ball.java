@@ -9,17 +9,20 @@ public class Ball
 {
     //short min value is -32,768 and max value is 32,767 (inclusive).
     //byte min value is -128 and max value is 127 (inclusive)
-
-    boolean actionDown = false;     // down => touchDown (on the screen).
     float x, y;
-    float initialX, initialY;  // acts
-    // as the (0,0) point.
+    float initialX, initialY;  // acts as the (0,0) point relative to the ball.
     short width, height;  //short is like int
+
+    float lineStopX, lineStopY;
+    byte quarter;
+    float radius; // for better readability.
+
+    boolean actionDown = false;     // true => touchDown (on the screen).
+
     Bitmap ballBitmap;
 
     Bitmap centerBitmap;
 
-    byte quarter;
 
 
 
@@ -28,8 +31,8 @@ public class Ball
     final float GRAVITY = 9.807f;
     float V, Vx, Vy; // max:  21 meters per second || 75.6 kmh
     float t;
-
     // acceleration = 0.
+
 
 
     public Ball (Resources res, float ratioX, float ratioY, float screenX, float screenY)
@@ -43,6 +46,8 @@ public class Ball
 
         width = (short) (50 * ratioToScale);
         height = (short) (50 * ratioToScale);
+
+        radius = width /2f;
 
 
         initialX = x + width/2f;
@@ -78,7 +83,7 @@ public class Ball
 
 
     float findAngleWhenOutside(float Tx, float Ty) // T - Touch point || * returns a radian
-    {return (float) (Math.atan2(initialY - (Ty + height/2f), initialX - (Tx + width/2f)));} // discussion: "degrees vs radians"
+    {return (float) (Math.atan2(initialY - Ty, initialX - Tx ));} // discussion: "degrees vs radians"
 
 
     float ballAngle() // the previous method isn't sufficient bc it updates only when touch is outside max dist.
@@ -86,13 +91,13 @@ public class Ball
 
 
 
-    double calcDistance (float x, float y)
+    double calcDistanceFromI(float x, float y)
     {return Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));} // this is the distance function
 
 
 
     float m () // slope of initial point to ball point.
-    {return -1 * (initialY - (y+height/2f)) / (initialX - (x+width/2f));}
+    {return (initialY - (y+height/2f)) / (initialX - (x+width/2f));}
 
 
 }
