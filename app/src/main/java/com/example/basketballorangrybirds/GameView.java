@@ -27,11 +27,12 @@ public class GameView
     private Ball ball;
     private Player player;
     private Basket basket;
+    private Ground ground;
     // Objects
 
     private final int screenX , screenY;
     private final float ratioX , ratioY;
-    private final byte SLEEP_MILLIS = 16; // byte is like int
+    private final byte SLEEP_MILLIS = 16; // byte is like int, refresh rate is (1000 / SLEEP_MILLIS)
     private boolean isPlaying;
     private Thread thread;
     private final GameActivity activity;
@@ -60,7 +61,9 @@ public class GameView
 
         background = new Background(getResources(), screenX, screenY);
 
-        ball = new Ball(getResources(), ratioX, ratioY, screenX, screenY);
+        ball = new Ball(getResources(), screenX, screenY);
+
+        ground = new Ground(getResources(), screenX, screenY);
 
 
         maxBallPull = (int) (250 * ratioX * ratioY); // the radius of max dist of the ball from the initial position
@@ -120,6 +123,8 @@ public class GameView
             screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint);
 
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
+
+
 
 //          SHOW AXIS:
             screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint2);

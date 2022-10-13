@@ -26,6 +26,7 @@ public class Ball
 
 
 
+    float screenX, screenY;
 
 
     final float WEIGHT; // kilo
@@ -45,12 +46,17 @@ public class Ball
     float HEIGHT;
     // acceleration = 0.
 
-    float PIXEL_TO_METER_RATIO; // discussion: Pixels to meters #19
+    float ratioX ; // discussion: Pixels to centimeters #19 || x pixels to meters.
+    float ratioY ; // discussion: Pixels to centimeters #19 || y pixels to meters.
 
 
 
 
-    public Ball (Resources res, float ratioX, float ratioY, float screenX, float screenY) {
+    public Ball (Resources res, float screenX, float screenY)
+    {
+        this.screenX = screenX;
+        this.screenY = screenY;
+
         final float ratioToScale = Math.max(screenY / 1920, screenX / 1080); // find the biggest difference in ratio to scale so that the ball is equally sized
 
 
@@ -61,7 +67,7 @@ public class Ball
         width = (short) (50 * ratioToScale);
         height = (short) (50 * ratioToScale);
 
-        radius = width / 2f;
+        radius = width / 2f; // which is 24 cm in circumference. (2 * radius)
 
 
         initialX = x + width / 2f;
@@ -75,13 +81,24 @@ public class Ball
         centerBitmap = Bitmap.createScaledBitmap(centerBitmap, 10, 10, false);
 
 
-        PIXEL_TO_METER_RATIO = 139.34425f;
+
+        // screenX - initialX = 7 meter because dist of hoop from throw line in 4.6 meters. (try #1)
+
+        // initialY = 1.83 meter because it's the players' height. so screen height is 5 meter || height of hoop is 3.05 meters. (try #1)
+
+        // basketball diameter 75 cm
+
+
+
+        ratioX = 6.27f / screenX;
+        ratioY = 5.81f / screenY; // discussion: screen ratios #21
+
+
         GRAVITY = 9.8f;
         WEIGHT = 0.62f;
         MAX_VELOCITY = 75.6f;
-        HEIGHT = (screenY - (y + height/2f)) / PIXEL_TO_METER_RATIO;
 
-//        Log.d("key1903311" , "" + (screenY - initialY) / 1.83f);
+
 
     }
 
@@ -125,6 +142,10 @@ public class Ball
 
     void formulas () // velocity had already been calculated in GameView.pullToVelocity()
     {
+        HEIGHT = Math.abs(screenY - (height / 2f + y)) * ratioY; // ✓
+
+
+
         velocityX = (float) Math.abs(Math.cos(-1 * Math.toDegrees(ballAngle())) * velocity);
         velocityY = (float) Math.abs(Math.sin(-1 * Math.toDegrees(ballAngle())) * velocity);
 
@@ -132,10 +153,10 @@ public class Ball
         time = (float) ((velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY);
 
 
-        max_height = HEIGHT + ( velocityY * velocityY / (2 * GRAVITY)) / PIXEL_TO_METER_RATIO;
+        max_height = 1 + ((HEIGHT + velocityY * velocityY / (2 * GRAVITY)) / ratioY) /100;
 
 
-        range = (float) ((velocityX * (velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY)) / PIXEL_TO_METER_RATIO;
+        range = (float) ((velocityX * (velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY)) / ratioX;
 
 
 
@@ -145,13 +166,13 @@ public class Ball
 
         Log.d("key19033 VELOCITY axis",velocityX + " <- x || y -> "+ velocityY + " ||  VELOCITY: " + velocity);
 
-    /*    Log.d("key19033 time",time + "");
+        Log.d("key19033 time",time + "");
 
         Log.d("key19033 HEIGHT112",HEIGHT + "");
 
         Log.d("key19033 max height",max_height + "");
 
-        Log.d("key19033 range",range + "");*/
+        Log.d("key19033 range",range + "");
 
     }
 
