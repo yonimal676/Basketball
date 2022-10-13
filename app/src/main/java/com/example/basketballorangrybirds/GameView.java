@@ -130,10 +130,14 @@ public class GameView
             screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint2);
             screenCanvas.drawLine(ball.initialX,0,ball.initialX,screenY, paint2);
 
+//          SHOW * BALL * AXIS:
+            screenCanvas.drawLine(0,ball.y + fixY(), screenX, ball.y + fixY(), paint2);
+            screenCanvas.drawLine(ball.x + fixX(),0,ball.x + fixX(), screenY, paint2);
 
 
-//            Log.d("key123123 MAX POINT",  ball.range /2f + " <- x ||| y -> " + ball.max_height);
-            screenCanvas.drawBitmap(ball.centerBitmap,ball.initialX + ball.range/2f, ball.initialY - ball.max_height, paint);
+
+            Log.d("key123123 MAX POINT",  ball.range /2f + " <- x ||| y -> " + ball.max_height);
+            screenCanvas.drawBitmap(ball.centerBitmap,ball.range/2f / ball.ratioX, screenY - (ball.max_height / ball.ratioY), paint);
 
 
 

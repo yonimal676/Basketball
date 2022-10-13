@@ -31,7 +31,7 @@ public class Ball
 
     final float WEIGHT; // kilo
 
-    final float GRAVITY;
+    float GRAVITY;
 
     float velocity, velocityX, velocityY; //VELOCITY
 
@@ -50,8 +50,11 @@ public class Ball
     float ratioY ; // discussion: Pixels to centimeters #19 || y pixels to meters.
 
 
-
-
+    /*
+     the middle of the rim is 4.191 meters from free throw line
+     the optimal launch angle for a 6 feet person is 50.8
+     the speed at which there will be a score is 28.968 kmh
+      */
     public Ball (Resources res, float screenX, float screenY)
     {
         this.screenX = screenX;
@@ -146,19 +149,21 @@ public class Ball
 
 
 
-        velocityX = (float) Math.abs(Math.cos(-1 * Math.toDegrees(ballAngle())) * velocity);
-        velocityY = (float) Math.abs(Math.sin(-1 * Math.toDegrees(ballAngle())) * velocity);
+        velocityX = (float) Math.cos(ballAngle()) * velocity;
+        velocityY = (float) Math.sin(ballAngle()) * velocity;
 
 
         time = (float) ((velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY);
 
 
-        max_height = 1 + ((HEIGHT + velocityY * velocityY / (2 * GRAVITY)) / ratioY) /100;
+        max_height = (HEIGHT + velocityY * velocityY / (2 * GRAVITY * HEIGHT)) * ratioX;
 
 
-        range = (float) ((velocityX * (velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY)) / ratioX;
+        range = (float) (velocityX * (velocityY + Math.sqrt(velocityY * velocityY + 2 * GRAVITY * HEIGHT)) / GRAVITY) * ratioX;
 
 
+
+        //Range of the projectile: R = Vx * [Vy + √(Vy² + 2 * g * h)] / g
 
 
 
@@ -166,13 +171,15 @@ public class Ball
 
         Log.d("key19033 VELOCITY axis",velocityX + " <- x || y -> "+ velocityY + " ||  VELOCITY: " + velocity);
 
-        Log.d("key19033 time",time + "");
+        Log.d("key19033 angle", "" + -1 * Math.toDegrees(ballAngle()));
 
-        Log.d("key19033 HEIGHT112",HEIGHT + "");
+   /*     Log.d("key19033 time","time: "+ time);
 
-        Log.d("key19033 max height",max_height + "");
+        Log.d("key19033 HEIGHT112","HEIGHT: "+ HEIGHT);
 
-        Log.d("key19033 range",range + "");
+        Log.d("key19033 max height","max_height: "+ max_height);
+
+        Log.d("key19033 range","range: "+ range);*/
 
     }
 
@@ -185,7 +192,6 @@ public class Ball
 
     //Maximum height: max_height = h + Vy² / (2 * g)
 
-    //Range of the projectile: R = Vx * [Vy + √(Vy² + 2 * g * h)] / g
 }
 
 
