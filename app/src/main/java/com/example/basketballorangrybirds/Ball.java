@@ -145,12 +145,13 @@ public class Ball
 
     void formulas () // velocity had already been calculated in GameView.pullToVelocity()
     {
+
         HEIGHT = Math.abs(screenY - (height / 2f + y)) * ratioY; // ✓
 
 
+        velocityY = (float) Math.abs(Math.sin(ballAngle()) * velocity);
 
-        velocityX = (float) Math.cos(ballAngle()) * velocity;
-        velocityY = (float) Math.sin(ballAngle()) * velocity;
+        velocityX = (float) Math.abs(Math.cos(ballAngle()) * velocity);
 
 
         time = (float) ((velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY);
@@ -169,17 +170,19 @@ public class Ball
 
 
 
-        Log.d("key19033 VELOCITY axis",velocityX + " <- x || y -> "+ velocityY + " ||  VELOCITY: " + velocity);
+        Log.d("key19033 VELOCITY axis",velocityX + " <- x || y -> "+ velocityY);
 
-        Log.d("key19033 angle", "" + -1 * Math.toDegrees(ballAngle()));
+        Log.d("key19033 VELOCITY", "VELOCITY: "+ velocity);
 
-   /*     Log.d("key19033 time","time: "+ time);
+        Log.d("key19033 angle", "angle: " + -1 * Math.toDegrees(ballAngle()));
+
+        Log.d("key19033 time","time: "+ time);
 
         Log.d("key19033 HEIGHT112","HEIGHT: "+ HEIGHT);
 
         Log.d("key19033 max height","max_height: "+ max_height);
 
-        Log.d("key19033 range","range: "+ range);*/
+        Log.d("key19033 range","range: "+ range);
 
     }
 

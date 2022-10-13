@@ -66,7 +66,7 @@ public class GameView
         ground = new Ground(getResources(), screenX, screenY);
 
 
-        maxBallPull = (int) (250 * ratioX * ratioY); // the radius of max dist of the ball from the initial position
+        maxBallPull = (int) (ball.radius * 6); // the radius of max dist of the ball from the initial position
 
 
 
@@ -308,9 +308,9 @@ public class GameView
 
             case MotionEvent.ACTION_UP: // ended touch
 
-                Log.d("ANGLE", "" + -1 * Math.toDegrees(ball.ballAngle()));
 
                 pullToVelocity(ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()));
+
                 Log.d("VELOCITY", "" + ball.velocity);
 
                 ball.setActionDown(false);
