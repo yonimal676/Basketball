@@ -154,13 +154,28 @@ public class Ball
         velocityX = (float) Math.abs(Math.cos(ballAngle()) * velocity);
 
 
-        time = (float) ((velocityY + Math.sqrt(velocityY*velocityY + 2*GRAVITY* HEIGHT)) / GRAVITY);
+
+        // time of flight: Vy * t – g * t² / 2 = 0
+        // ( -g * t² / 2) + velocityY * t = 0   / * 2
+        // -g * t² + 2 * velocityY * t = 0
+        // a -> -g | b -> 2 * velocityY | c -> 0
 
 
-        max_height = (HEIGHT + velocityY * velocityY / (2 * GRAVITY * HEIGHT)) * ratioX;
+
+        float tempPLUS = (float) (((-2 * velocityY) + Math.sqrt( (2 * velocityY) * (2 * velocityY))) / 2 * -GRAVITY); // -4 * -g * 0 = 0
+        float tempMINUS = (float) (((-2 * velocityY) - Math.sqrt( (2 * velocityY) * (2 * velocityY))) / 2 * -GRAVITY); // -4 * -g * 0 = 0
+        
+        if (tempPLUS >= 0)
+            time = tempPLUS;
+        else if (tempMINUS > 0)
+            time = tempMINUS;
 
 
-        range = (float) (velocityX * (velocityY + Math.sqrt(velocityY * velocityY + 2 * GRAVITY * HEIGHT)) / GRAVITY) * ratioX;
+
+        /*max_height = (HEIGHT + velocityY * velocityY / (2 * GRAVITY * HEIGHT)) * ratioX;
+
+
+        range = (float) (velocityX * (velocityY + Math.sqrt(velocityY * velocityY + 2 * GRAVITY * HEIGHT)) / GRAVITY) * ratioX;*/
 
 
 
