@@ -44,10 +44,9 @@ public class Ball
     float range;
 
     float HEIGHT;
-    // acceleration = 0.
 
-    float ratioX ; // discussion: Pixels to centimeters #19 || x pixels to meters.
-    float ratioY ; // discussion: Pixels to centimeters #19 || y pixels to meters.
+    final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
+
 
 
     /*
@@ -60,21 +59,34 @@ public class Ball
         this.screenX = screenX;
         this.screenY = screenY;
 
-        final float ratioToScale = Math.max(screenY / 1920, screenX / 1080); // find the biggest difference in ratio to scale so that the ball is equally sized
+
+        // screenX = half a basketball court which is 14 meters.
+        ratioPXtoM = screenX / 14 ;
+        /* TOO TINY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
 
-        x = (int) (screenX / 8);             // 1/8 to the right
-        y = (int) (screenY - screenY / 3.5); // 1 - 1/3.5 up
+        //Basketball court: 28m long  ->  screenX = 14m
+        /*x = (int) ( screenX / 5.2578f );
+        y = (int) ( screenY - (1.83 * ratioPXtoM) );*/
 
+        x = (int) ( screenX / 8 );
+        y = (int) ( screenY - screenY / 3.5 );
 
-        width = (short) (50 * ratioToScale);
-        height = (short) (50 * ratioToScale);
-
-        radius = width / 2f; // which is 24 cm in circumference. (2 * radius)
 
 
         initialX = x + width / 2f;
         initialY = y + height / 2f;
+
+
+
+
+        // basketball diameter 75 cm
+        width = (short) (0.75 * ratioPXtoM);
+        height = (short) (0.75 * ratioPXtoM);
+
+        radius = width / 2f; // which is 24 cm in circumference. (2 * radius)
+
+
 
 
         ballBitmap = BitmapFactory.decodeResource(res, R.drawable.basketball);
@@ -85,24 +97,17 @@ public class Ball
 
 
 
-        // screenX - initialX = 7 meter because dist of hoop from throw line in 4.6 meters. (try #1)
-
-        // initialY = 1.83 meter because it's the players' height. so screen height is 5 meter || height of hoop is 3.05 meters. (try #1)
-
-        // basketball diameter 75 cm
 
 
 
-        ratioX = 6.27f / screenX;
-        ratioY = 5.81f / screenY; // discussion: screen ratios #21
+
+
+
 
 
         GRAVITY = 9.8f;
         WEIGHT = 0.62f;
         MAX_VELOCITY = 75.6f;
-
-
-
     }
 
     void setActionDown (boolean ActionDown) {this.actionDown = ActionDown;}
@@ -146,12 +151,11 @@ public class Ball
     void formulas () // velocity had already been calculated in GameView.pullToVelocity()
     {
 
-        HEIGHT = Math.abs(screenY - (height / 2f + y)) * ratioY; // ✓
+        velocityX = (float) Math.abs(Math.cos(ballAngle()) * velocity); // ✓
+        velocityY = (float) Math.abs(Math.sin(ballAngle()) * velocity); // ✓
 
+        HEIGHT = Math.abs(screenY - (height / 2f + y)) / ratioPXtoM; // ✓
 
-        velocityY = (float) Math.abs(Math.sin(ballAngle()) * velocity);
-
-        velocityX = (float) Math.abs(Math.cos(ballAngle()) * velocity);
 
 
 
@@ -161,10 +165,10 @@ public class Ball
         // a -> -g | b -> 2 * velocityY | c -> 0
 
 
-
         float tempPLUS = (float) (((-2 * velocityY) + Math.sqrt( (2 * velocityY) * (2 * velocityY))) / 2 * -GRAVITY); // -4 * -g * 0 = 0
         float tempMINUS = (float) (((-2 * velocityY) - Math.sqrt( (2 * velocityY) * (2 * velocityY))) / 2 * -GRAVITY); // -4 * -g * 0 = 0
-        
+
+
         if (tempPLUS >= 0)
             time = tempPLUS;
         else if (tempMINUS > 0)
@@ -172,43 +176,39 @@ public class Ball
 
 
 
-        /*max_height = (HEIGHT + velocityY * velocityY / (2 * GRAVITY * HEIGHT)) * ratioX;
-
-
-        range = (float) (velocityX * (velocityY + Math.sqrt(velocityY * velocityY + 2 * GRAVITY * HEIGHT)) / GRAVITY) * ratioX;*/
-
-
-
-        //Range of the projectile: R = Vx * [Vy + √(Vy² + 2 * g * h)] / g
+        /*
+        max_height = (HEIGHT + velocityY * velocityY / (2 * GRAVITY * HEIGHT)) * ratioX;
+        range = (float) (velocityX * (velocityY + Math.sqrt(velocityY * velocityY + 2 * GRAVITY * HEIGHT)) / GRAVITY) * ratioX;
+        */
 
 
 
 
 
+
+
+
+        Log.d("key19033 ", "Grav " + GRAVITY);
+        Log.d("key19033 i", initialX +" :x <- initial -> y: "+ initialY);
         Log.d("key19033 VELOCITY axis",velocityX + " <- x || y -> "+ velocityY);
-
         Log.d("key19033 VELOCITY", "VELOCITY: "+ velocity);
-
         Log.d("key19033 angle", "angle: " + -1 * Math.toDegrees(ballAngle()));
-
         Log.d("key19033 time","time: "+ time);
-
         Log.d("key19033 HEIGHT112","HEIGHT: "+ HEIGHT);
-
         Log.d("key19033 max height","max_height: "+ max_height);
-
         Log.d("key19033 range","range: "+ range);
 
     }
 
-    // WITH ELEVATION OF 1.83m
-
     //Horizontal velocity component: Vx = V * cos(α)
     //Vertical velocity component: Vy = V * sin(α)
+    //Vertical velocity is calculated as follows: Vy – g * t
 
-    //Time of flight: t = [Vy + √(Vy² + 2 * g * h)] / g
+    //Range of the projectile: R = Vx * [Vy + √(Vy² + 2 * g * h)] / g    ||    R = V² * sin(2α) / g   ||  Vx * time
 
     //Maximum height: max_height = h + Vy² / (2 * g)
+
+    // time of flight: Vy * t – g * t² / 2 = 0
 
 }
 

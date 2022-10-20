@@ -15,9 +15,9 @@ public class GameView
         extends SurfaceView implements Runnable
 {
 
-
     private final Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
     private final Paint paint2;            // The paint is the thing that "draws"//
+    private final Paint paint3;
     private final int maxBallPull; // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
     // General
@@ -79,13 +79,19 @@ public class GameView
 
 
 
+        paint3 = new Paint();
+        paint3.setColor(Color.BLACK);
+        paint3.setStyle(Paint.Style.FILL_AND_STROKE);
+        paint3.setPathEffect(new DashPathEffect(new float[]{10, 10}, 0)); // array of ON and OFF distances,
+        paint3.setStrokeWidth(6f);
+        //ball hitbox
+
+
         //paint for showing axis:
         paint2 = new Paint();
         paint2.setColor(Color.BLACK);
         paint2.setStyle(Paint.Style.FILL);
         paint2.setStrokeWidth(6f);
-        // ↑  This segment is for the precursor of the throw.
-
     }
 
 
@@ -135,9 +141,17 @@ public class GameView
             screenCanvas.drawLine(ball.x + fixX(),0,ball.x + fixX(), screenY, paint2);
 
 
+            screenCanvas.drawLine(ball.x,ball.y, ball.x + ball.width, ball.y, paint3);
+            screenCanvas.drawLine(ball.x ,ball.y,ball.x, ball.y + ball.height, paint3);
+            screenCanvas.drawLine(ball.x + ball.width,ball.y, ball.x + ball.width, ball.y + ball.height, paint3);
+            screenCanvas.drawLine(ball.x,ball.y + ball.height, ball.x + ball.width, ball.y + ball.height, paint3);
 
-            Log.d("key123123 MAX POINT",  ball.range /2f + " <- x ||| y -> " + ball.max_height);
-            screenCanvas.drawBitmap(ball.centerBitmap,ball.range/2f / ball.ratioX, screenY - (ball.max_height / ball.ratioY), paint);
+
+
+
+
+//            Log.d("key123123 MAX POINT",  ball.range /2f + " <- x ||| y -> " + ball.max_height);
+//            screenCanvas.drawBitmap(ball.centerBitmap, ball.x + ball.range/2f / ball.ratioX, screenY - (ball.max_height / ball.ratioY), paint);
 
 
 
@@ -290,10 +304,6 @@ public class GameView
 
                             case 4: ball.setPosition(ball.initialX + perpAdj, ball.initialY + perpOpp); break;
                         }
-
-
-
-
                     }// outside drag-able circle
 //                    Log.d("quarter", "" + ball.quarter);
 
@@ -309,7 +319,7 @@ public class GameView
             case MotionEvent.ACTION_UP: // ended touch
 
 
-                pullToVelocity(ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()));
+                pullToVelocity(ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY())); // ✓
 
                 Log.d("VELOCITY", "" + ball.velocity);
 
