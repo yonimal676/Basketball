@@ -1,6 +1,8 @@
 package com.example.basketballorangrybirds;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -15,9 +17,11 @@ public class GameView
         extends SurfaceView implements Runnable
 {
 
-    private final Paint paint;            // The paint is the thing that "draws"// the image/Bitmap.
-    private final Paint paint2;            // The paint is the thing that "draws"//
-    private final Paint paint3;
+    private final Paint paint1;            // precursor of throw trajectory.
+    private final Paint paint2;            // axis in respect to initial point of the ball.
+    private final Paint paint3;            // ball hit-box.
+    private final Paint paint4;            // axis in respect to the ball.
+
     private final int maxBallPull; // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
     // General
@@ -30,6 +34,7 @@ public class GameView
     private Ground ground;
     // Objects
 
+
     private final int screenX , screenY;
     private final float ratioX , ratioY;
     private final byte SLEEP_MILLIS = 16; // byte is like int, refresh rate is (1000 / SLEEP_MILLIS)
@@ -39,6 +44,9 @@ public class GameView
     private final Context gameActivityContext;
     // Technical stuff
 
+
+    private Bitmap showAxis;   // screen axis in comparison to initial ball place #12
+    private byte showAxisBool; // 0 -> false, 1 -> true
 
 
 
@@ -70,28 +78,38 @@ public class GameView
 
 
 
-        paint = new Paint();
-        paint.setColor(Color.BLACK);
-        paint.setStyle(Paint.Style.FILL_AND_STROKE);
-        paint.setPathEffect(new DashPathEffect(new float[]{30, 30}, 0)); // array of ON and OFF distances,
-        paint.setStrokeWidth(6f);
-        // ↑  This segment is for the precursor of the throw.
+        paint1 = new Paint();
+        paint1.setColor(Color.WHITE);
+        paint1.setStyle(Paint.Style.FILL_AND_STROKE);
+        paint1.setPathEffect(new DashPathEffect(new float[]{30, 30}, 0)); // array of ON and OFF distances,
+        paint1.setStrokeWidth(3f);
 
+
+        paint2 = new Paint();
+        paint2.setColor(Color.GREEN);
+        paint2.setStyle(Paint.Style.FILL);
+        paint2.setStrokeWidth(3f);
 
 
         paint3 = new Paint();
-        paint3.setColor(Color.BLACK);
+        paint3.setColor(Color.RED);
         paint3.setStyle(Paint.Style.FILL_AND_STROKE);
-        paint3.setPathEffect(new DashPathEffect(new float[]{10, 10}, 0)); // array of ON and OFF distances,
-        paint3.setStrokeWidth(6f);
-        //ball hitbox
+        paint3.setPathEffect(new DashPathEffect(new float[]{1, 4}, 0)); // array of ON and OFF distances,
+        paint3.setStrokeWidth(3f);
 
 
-        //paint for showing axis:
-        paint2 = new Paint();
-        paint2.setColor(Color.BLACK);
-        paint2.setStyle(Paint.Style.FILL);
-        paint2.setStrokeWidth(6f);
+        paint4 = new Paint();
+        paint4.setColor(Color.WHITE);
+        paint4.setStyle(Paint.Style.FILL);
+        paint4.setStrokeWidth(3f);
+        //ball hit-box
+
+
+        showAxis = BitmapFactory.decodeResource(getResources(), R.drawable.play_btn);
+        showAxis = Bitmap.createScaledBitmap(showAxis, ball.width * 3, ball.height * 3, false);
+
+
+        showAxisBool = 0;
     }
 
 
@@ -106,6 +124,7 @@ public class GameView
             update();//The screen
             draw();//The components
             sleep();//To render
+
 
         }
     }
@@ -126,41 +145,51 @@ public class GameView
             Canvas screenCanvas = getHolder().lockCanvas(); // create the canvas
 
 
-            screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint);
+            screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint1);
 
-            screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint);
+            screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);
 
 
 
+            screenCanvas.drawLine(ball.initialX - ball.radius/1.5f, ball.initialY - ball.radius/1.5f,
+                    ball.initialX + ball.radius/1.5f, ball.initialY + ball.radius/1.5f, paint2);
+            screenCanvas.drawLine(ball.initialX - ball.radius/1.5f, ball.initialY + ball.radius/1.5f,
+                    ball.initialX + ball.radius/1.5f, ball.initialY - ball.radius/1.5f, paint2);
+
+
+            if (showAxisBool == 1)
+            {
 //          SHOW AXIS:
-            screenCanvas.drawLine(0,ball.initialY,screenX,ball.initialY, paint2);
-            screenCanvas.drawLine(ball.initialX,0,ball.initialX,screenY, paint2);
+                screenCanvas.drawLine(0, ball.initialY, screenX, ball.initialY, paint2);
+                screenCanvas.drawLine(ball.initialX, 0, ball.initialX, screenY, paint2);
 
-//          SHOW * BALL * AXIS:
-            screenCanvas.drawLine(0,ball.y + fixY(), screenX, ball.y + fixY(), paint2);
-            screenCanvas.drawLine(ball.x + fixX(),0,ball.x + fixX(), screenY, paint2);
-
-
-            screenCanvas.drawLine(ball.x,ball.y, ball.x + ball.width, ball.y, paint3);
-            screenCanvas.drawLine(ball.x ,ball.y,ball.x, ball.y + ball.height, paint3);
-            screenCanvas.drawLine(ball.x + ball.width,ball.y, ball.x + ball.width, ball.y + ball.height, paint3);
-            screenCanvas.drawLine(ball.x,ball.y + ball.height, ball.x + ball.width, ball.y + ball.height, paint3);
+//          SHOW BALL AXIS:
+                screenCanvas.drawLine(0, ball.y + fixY(), screenX, ball.y + fixY(), paint4);
+                screenCanvas.drawLine(ball.x + fixX(), 0, ball.x + fixX(), screenY, paint4);
 
 
+                screenCanvas.drawLine(ball.x, ball.y, ball.x + ball.width, ball.y, paint3);
+                screenCanvas.drawLine(ball.x, ball.y, ball.x, ball.y + ball.height, paint3);
+                screenCanvas.drawLine(ball.x + ball.width, ball.y, ball.x + ball.width, ball.y + ball.height, paint3);
+                screenCanvas.drawLine(ball.x, ball.y + ball.height, ball.x + ball.width, ball.y + ball.height, paint3);
 
 
+            }
+
+            screenCanvas.drawBitmap(showAxis, screenX / 2f - ball.width * 3, 0, paint1);
 
 //            Log.d("key123123 MAX POINT",  ball.range /2f + " <- x ||| y -> " + ball.max_height);
-//            screenCanvas.drawBitmap(ball.centerBitmap, ball.x + ball.range/2f / ball.ratioX, screenY - (ball.max_height / ball.ratioY), paint);
+//            screenCanvas.drawBitmap(ball.centerBitmap, ball.x + ball.range/2f / ball.ratioX, screenY - (ball.max_height / ball.ratioY), paint1);
 
 
 
 
             //discussion: X and Y of stop screenCanvas.DrawLine #15
-            if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.radius) // line should only be drawn outside of the ball
-            {
-                ball.lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.radius));
-                ball.lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.radius));
+            if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.radius)
+            {// line should only be drawn outside of the ball
+
+                float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.radius)); // similar to perpAdj
+                float lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.radius)); // similar to perpOpp
                 // issue: correcting the line with the ball #13
 
 
@@ -168,38 +197,38 @@ public class GameView
                 {
                     case 1:
                         screenCanvas.drawLine(
-                                ball.x + fixX() - ball.lineStopX,
-                                ball.y + fixY() + ball.lineStopY,
+                                ball.x + fixX() - lineStopX,
+                                ball.y + fixY() + lineStopY,
                                 ball.initialX - (ball.x - ball.initialX) - fixX(),
                                 ball.initialY + (ball.initialY-ball.y) - fixY(),
-                                paint);
+                                paint1);
                         break;
 
                     case 2:
                         screenCanvas.drawLine(
-                                ball.x + fixX() + ball.lineStopX,
-                                ball.y + fixY() + ball.lineStopY,
+                                ball.x + fixX() + lineStopX,
+                                ball.y + fixY() + lineStopY,
                                 ball.initialX + (ball.initialX - ball.x) - fixX(),
                                 ball.initialY + (ball.initialY - ball.y) - fixY(),
-                                paint);
+                                paint1);
                         break;
 
                     case 3:
                         screenCanvas.drawLine(
-                                ball.x + fixX() + ball.lineStopX,
-                                ball.y + fixY() - ball.lineStopY,
+                                ball.x + fixX() + lineStopX,
+                                ball.y + fixY() - lineStopY,
                                 ball.initialX + (ball.initialX - ball.x) - fixX(),
                                 ball.initialY - (ball.y - ball.initialY) - fixY(),
-                                paint);
+                                paint1);
                         break;
 
                     case 4:
                         screenCanvas.drawLine(
-                                ball.x + fixX() - ball.lineStopX,
-                                ball.y + fixY() - ball.lineStopY,
+                                ball.x + fixX() - lineStopX,
+                                ball.y + fixY() - lineStopY,
                                 ball.initialX - (ball.x - ball.initialX) - fixX(),
                                 ball.initialY - (ball.y - ball.initialY) - fixY(),
-                                paint);
+                                paint1);
                         break;
                 } // How do humans know which mushrooms are safe to eat? Trial and error, my friend.
 
@@ -247,6 +276,16 @@ public class GameView
 
                 if (ball.isTouching(event.getX(),event.getY()))
                     ball.setActionDown(true);                   // 'ball' has a boolean method that indicates whether the object is touched.
+
+
+                if (event.getRawX() >= screenX /2f - ball.width * 3 && event.getRawX() <= screenX /2f + ball.width * 3
+                    && event.getRawY() >= 0 && event.getRawY() <= ball.height * 3)
+                {
+                    if (showAxisBool == 0)
+                        showAxisBool = 1;
+                    else
+                        showAxisBool = 0;
+                }
 
                 break;
 

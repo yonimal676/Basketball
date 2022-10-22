@@ -21,5 +21,9 @@ public class MainActivity extends AppCompatActivity
 
         findViewById(R.id.play_btn).setOnClickListener(view ->
                 startActivity(new Intent(MainActivity.this, GameActivity.class)));
+
+
+
+
     }
 }
