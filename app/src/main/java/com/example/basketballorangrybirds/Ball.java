@@ -4,7 +4,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
-import android.util.Log;
 
 public class Ball
 {
@@ -24,7 +23,7 @@ public class Ball
     byte quarter;
 
 
-    float velocity, velocityX, velocityY; //VELOCITY
+    float velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
     float time;
     float max_height;
     float range; // of projectile.
@@ -121,54 +120,9 @@ public class Ball
     void formulas () // velocity had already been calculated in GameView.pullToVelocity()
     {
 
-        velocityX = (float) Math.abs(Math.cos(ballAngle()) * velocity); // ✓
-        velocityY = (float) Math.abs(Math.sin(ballAngle()) * velocity); // ✓
-
-        HEIGHT = Math.abs(screenY - (height / 2f + y)) / ratioPXtoM; // ✓
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        Log.d("key19033 i", initialX +" :x <- initial -> y: "+ initialY);
-        Log.d("key19033 angle", "angle: " + -1 * Math.toDegrees(ballAngle()));
-
-        Log.d("key19033 VELOCITY axis",velocityX + "  :x <- VELOCITY -> y:  "+ velocityY);
-        Log.d("key19033 VELOCITY", "VELOCITY: "+ velocity);
-
-        Log.d("key19033 time","time: "+ time);
-        Log.d("key19033 HEIGHT112","height of ball: "+ HEIGHT);
-        Log.d("key19033 max height","max height: "+ max_height);
-        Log.d("key19033 range","range: "+ range);
-
-        Log.d("key19033 time","__________________________SWAG____________________________");
 
 
     }

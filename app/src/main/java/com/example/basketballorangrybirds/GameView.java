@@ -11,8 +11,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
-import java.util.Timer;
-
 public class GameView
         extends SurfaceView implements Runnable
 {
@@ -24,6 +22,7 @@ public class GameView
 
     private final int maxBallPull; // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
+    private boolean thrown;
     // General
 
 
@@ -74,7 +73,7 @@ public class GameView
         ground = new Ground(getResources(), screenX, screenY);
 
 
-        maxBallPull = (int) (ball.radius * 6); // the radius of max dist of the ball from the initial position
+        maxBallPull = (int) (ball.width / 2f * 6); // the radius of max dist of the ball from the initial position
 
 
 
@@ -110,6 +109,7 @@ public class GameView
 
 
         showAxisBool = 0;
+        thrown = false;
     }
 
 
@@ -133,7 +133,44 @@ public class GameView
 
     public void update ()
     {
-        //ball.Formula(x,y,velocity)
+        if (thrown)
+        {
+            ball.velocityX = (float) Math.abs(Math.cos(ball.ballAngle()) * ball.velocity); // ✓
+            ball.initialVelocityY = (float) Math.abs(Math.sin(ball.ballAngle()) * ball.velocity); // ✓
+
+            ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
+
+
+
+            ball.time = (float) (2 * ball.velocity * Math.sin(-180/Math.PI * ball.ballAngle()));
+
+            ball.velocityY = ball.initialVelocityY - (ball.GRAVITY * ball.time);
+
+            ball.x = ball.initialX + ball.velocityX * ball.time;
+
+            ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+
+
+
+
+            //y=(tanθ0)x−[g2(v0cosθ0)2]x2.
+
+            Log.d("key19033 i", ball.initialX +" :x <- initial -> y: "+ ball.initialY);
+            Log.d("key19033 angle", "angle: " + -1 * Math.toDegrees(ball.ballAngle()));
+
+            Log.d("key19033 VELOCITY axis",ball.velocityX + "  :x <- VELOCITY -> y:  "+ ball.velocityY);
+            Log.d("key19033 VELOCITY", "VELOCITY: "+ ball.velocity);
+
+            Log.d("key19033 time","time: "+ ball.time);
+            Log.d("key19033 HEIGHT112","height of ball: "+ball.HEIGHT);
+            Log.d("key19033 max height","max height: "+ ball.max_height);
+            Log.d("key19033 range","range: "+ ball.range);
+
+            Log.d("key19033 time","__________________________SWAG____________________________");
+
+
+        }
+
     }
 
 
@@ -151,10 +188,10 @@ public class GameView
 
 
 
-            screenCanvas.drawLine(ball.initialX - ball.radius/1.5f, ball.initialY - ball.radius/1.5f,
-                    ball.initialX + ball.radius/1.5f, ball.initialY + ball.radius/1.5f, paint2);
-            screenCanvas.drawLine(ball.initialX - ball.radius/1.5f, ball.initialY + ball.radius/1.5f,
-                    ball.initialX + ball.radius/1.5f, ball.initialY - ball.radius/1.5f, paint2);
+            screenCanvas.drawLine(ball.initialX - ball.width/3f, ball.initialY - ball.height/3f,
+                    ball.initialX + ball.width/3f, ball.initialY + ball.height/3f, paint2);
+            screenCanvas.drawLine(ball.initialX - ball.width/3f, ball.initialY + ball.height/3f,
+                    ball.initialX + ball.width/3f, ball.initialY - ball.height/3f, paint2);
 
 
             if (showAxisBool == 1)
@@ -185,11 +222,11 @@ public class GameView
 
 
             //discussion: X and Y of stop screenCanvas.DrawLine #15
-            if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.radius)
+            if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width/2f)
             {// line should only be drawn outside of the ball
 
-                float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.radius)); // similar to perpAdj
-                float lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.radius)); // similar to perpOpp
+                float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.width/2f)); // similar to perpAdj
+                float lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.width/2f)); // similar to perpOpp
                 // issue: correcting the line with the ball #13
 
 
@@ -358,17 +395,15 @@ public class GameView
             case MotionEvent.ACTION_UP: // ended touch
 
 
-                pullToVelocity(ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY())); // ✓
+                if (ball.getActionDown())
+                {
+                    pullToVelocity(ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY())); // ✓
 
-                Log.d("VELOCITY", "" + ball.velocity);
+                    thrown = true;
+                }
 
                 ball.setActionDown(false);
 
-
-                Timer timer = new Timer(); // or something like this.
-
-
-                // start timer for calculating the speed of the ball.
                 break;
 
         }
@@ -396,8 +431,7 @@ public class GameView
 
 
     public void pullToVelocity (float pullDistance) // percent of distance from max distance will result in the velocity.
-    {ball.velocity = (pullDistance / maxBallPull) * ball.MAX_VELOCITY;
-    ball.formulas();}
+    {ball.velocity = (pullDistance / maxBallPull) * ball.MAX_VELOCITY;}
 
 
 
