@@ -25,6 +25,7 @@ public class Ball
 
     float velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
     float time;
+//    float timeAtMax;
     float max_height;
     float range; // of projectile.
     float HEIGHT;
@@ -56,7 +57,7 @@ public class Ball
         // Basketball court: 28m long  ->  screenX = half a basketball court ( 14m )
         ratioPXtoM = screenX / 14 ;
 
-        // This isn't coordinated with the real court size
+        /* This isn't YET coordinated with the real court size */
         x = (int) ( screenX / 8 );             // 1/8 to the right
         y = (int) ( screenY - screenY / 3.5 ); // 1 - 1/3.5 up
 
@@ -79,7 +80,8 @@ public class Ball
         // Physics-related stuff:
         GRAVITY = 9.8f;
         WEIGHT = 0.62f;
-        MAX_VELOCITY = 75.6f;
+        MAX_VELOCITY = 75.6f * 2; // also max pull
+        time = 0;
     }
 
     void setActionDown (boolean ActionDown) {this.isTouch = ActionDown;}
@@ -112,31 +114,6 @@ public class Ball
 
     float calcDistanceFromI(float x, float y) // To know whether or not the ball is at max distance from i.
     {return (float) Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));}
-
-
-
-
-    // physics, shit...
-    void formulas () // velocity had already been calculated in GameView.pullToVelocity()
-    {
-
-
-
-
-
-
-    }
-
-    //Horizontal velocity component: Vx = V * cos(α)
-    //Vertical velocity component: Vy = V * sin(α)
-    //Vertical velocity is calculated as follows: Vy – g * t
-
-    //Range of the projectile: R = Vx * [Vy + √(Vy² + 2 * g * h)] / g    ||    R = V² * sin(2α) / g   ||  Vx * time
-
-    //Maximum height: max_height = h + Vy² / (2 * g)
-
-    // time of flight: Vy * t – g * t² / 2 = 0
-
 
 
 }

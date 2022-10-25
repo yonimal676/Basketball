@@ -11,6 +11,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
+import java.util.ArrayList;
+
 public class GameView
         extends SurfaceView implements Runnable
 {
@@ -20,7 +22,7 @@ public class GameView
     private final Paint paint3;            // ball hit-box.
     private final Paint paint4;            // axis in respect to the ball.
 
-    private final int maxBallPull; // radius of the circle which determines max dist. ball from initial point
+    private final int maxBallPull;         // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
     private boolean thrown;
     // General
@@ -28,6 +30,7 @@ public class GameView
 
     private Background background;
     private Ball ball;
+    private ArrayList<Dot> dotArrayList;
     private Player player;
     private Basket basket;
     private Ground ground;
@@ -110,6 +113,8 @@ public class GameView
 
         showAxisBool = 0;
         thrown = false;
+
+        dotArrayList = new ArrayList<>();
     }
 
 
@@ -120,7 +125,6 @@ public class GameView
     {
         while (isPlaying)
         { // run only if we play.
-
             update();//The screen
             draw();//The components
             sleep();//To render
@@ -133,43 +137,35 @@ public class GameView
 
     public void update ()
     {
-        if (thrown)
+
+        if (thrown) // discussion: physics #17
         {
-            ball.velocityX = (float) Math.abs(Math.cos(ball.ballAngle()) * ball.velocity); // ✓
-            ball.initialVelocityY = (float) Math.abs(Math.sin(ball.ballAngle()) * ball.velocity); // ✓
 
             ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
 
-
-
-            ball.time = (float) (2 * ball.velocity * Math.sin(-180/Math.PI * ball.ballAngle()));
+//            ball.timeAtMax = ball.initialVelocityY / ball.GRAVITY;
 
             ball.velocityY = ball.initialVelocityY - (ball.GRAVITY * ball.time);
 
+
+            ball.max_height = (float) (ball.velocity * ball.velocity * Math.sin(ball.ballAngle() * Math.sin(ball.ballAngle())
+                                        / (2 * ball.GRAVITY)));
+
+           // Log.d("key19033 time elapsed","time elapsed: "+ ball.time);
+
+
+
             ball.x = ball.initialX + ball.velocityX * ball.time;
 
-            ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+            ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+
+            dotArrayList.add(new Dot(ball.x, ball.y, getResources()));
 
 
 
-
-            //y=(tanθ0)x−[g2(v0cosθ0)2]x2.
-
-            Log.d("key19033 i", ball.initialX +" :x <- initial -> y: "+ ball.initialY);
-            Log.d("key19033 angle", "angle: " + -1 * Math.toDegrees(ball.ballAngle()));
-
-            Log.d("key19033 VELOCITY axis",ball.velocityX + "  :x <- VELOCITY -> y:  "+ ball.velocityY);
-            Log.d("key19033 VELOCITY", "VELOCITY: "+ ball.velocity);
-
-            Log.d("key19033 time","time: "+ ball.time);
-            Log.d("key19033 HEIGHT112","height of ball: "+ball.HEIGHT);
-            Log.d("key19033 max height","max height: "+ ball.max_height);
-            Log.d("key19033 range","range: "+ ball.range);
-
-            Log.d("key19033 time","__________________________SWAG____________________________");
-
-
-        }
+            if (ball.y == 0)
+                thrown = false;
+        } // if (thrown)
 
     }
 
@@ -188,10 +184,18 @@ public class GameView
 
 
 
+
+
+
+
+
             screenCanvas.drawLine(ball.initialX - ball.width/3f, ball.initialY - ball.height/3f,
                     ball.initialX + ball.width/3f, ball.initialY + ball.height/3f, paint2);
             screenCanvas.drawLine(ball.initialX - ball.width/3f, ball.initialY + ball.height/3f,
                     ball.initialX + ball.width/3f, ball.initialY - ball.height/3f, paint2);
+
+
+
 
 
             if (showAxisBool == 1)
@@ -221,54 +225,63 @@ public class GameView
 
 
 
-            //discussion: X and Y of stop screenCanvas.DrawLine #15
-            if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width/2f)
-            {// line should only be drawn outside of the ball
 
-                float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.width/2f)); // similar to perpAdj
-                float lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.width/2f)); // similar to perpOpp
-                // issue: correcting the line with the ball #13
+            if (thrown) {
+                for (Dot dot : dotArrayList)
+                    screenCanvas.drawBitmap(dot.dotBitmap, dot.x, dot.y, paint2);
+            }
 
-
-                switch (ball.quarter) // draw a line to the opposite corner
+            else
                 {
-                    case 1:
-                        screenCanvas.drawLine(
-                                ball.x + fixX() - lineStopX,
-                                ball.y + fixY() + lineStopY,
-                                ball.initialX - (ball.x - ball.initialX) - fixX(),
-                                ball.initialY + (ball.initialY-ball.y) - fixY(),
-                                paint1);
-                        break;
 
-                    case 2:
-                        screenCanvas.drawLine(
-                                ball.x + fixX() + lineStopX,
-                                ball.y + fixY() + lineStopY,
-                                ball.initialX + (ball.initialX - ball.x) - fixX(),
-                                ball.initialY + (ball.initialY - ball.y) - fixY(),
-                                paint1);
-                        break;
+                //discussion: X and Y of stop screenCanvas.DrawLine #15
+                if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width / 2f) {// line should only be drawn outside of the ball
 
-                    case 3:
-                        screenCanvas.drawLine(
-                                ball.x + fixX() + lineStopX,
-                                ball.y + fixY() - lineStopY,
-                                ball.initialX + (ball.initialX - ball.x) - fixX(),
-                                ball.initialY - (ball.y - ball.initialY) - fixY(),
-                                paint1);
-                        break;
+                    float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.width / 2f)); // similar to perpAdj
+                    float lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.width / 2f)); // similar to perpOpp
+                    // issue: correcting the line with the ball #13
 
-                    case 4:
-                        screenCanvas.drawLine(
-                                ball.x + fixX() - lineStopX,
-                                ball.y + fixY() - lineStopY,
-                                ball.initialX - (ball.x - ball.initialX) - fixX(),
-                                ball.initialY - (ball.y - ball.initialY) - fixY(),
-                                paint1);
-                        break;
-                } // How do humans know which mushrooms are safe to eat? Trial and error, my friend.
 
+                    switch (ball.quarter) // draw a line to the opposite corner
+                    {
+                        case 1:
+                            screenCanvas.drawLine(
+                                    ball.x + fixX() - lineStopX,
+                                    ball.y + fixY() + lineStopY,
+                                    ball.initialX - (ball.x - ball.initialX) - fixX(),
+                                    ball.initialY + (ball.initialY - ball.y) - fixY(),
+                                    paint1);
+                            break;
+
+                        case 2:
+                            screenCanvas.drawLine(
+                                    ball.x + fixX() + lineStopX,
+                                    ball.y + fixY() + lineStopY,
+                                    ball.initialX + (ball.initialX - ball.x) - fixX(),
+                                    ball.initialY + (ball.initialY - ball.y) - fixY(),
+                                    paint1);
+                            break;
+
+                        case 3:
+                            screenCanvas.drawLine(
+                                    ball.x + fixX() + lineStopX,
+                                    ball.y + fixY() - lineStopY,
+                                    ball.initialX + (ball.initialX - ball.x) - fixX(),
+                                    ball.initialY - (ball.y - ball.initialY) - fixY(),
+                                    paint1);
+                            break;
+
+                        case 4:
+                            screenCanvas.drawLine(
+                                    ball.x + fixX() - lineStopX,
+                                    ball.y + fixY() - lineStopY,
+                                    ball.initialX - (ball.x - ball.initialX) - fixX(),
+                                    ball.initialY - (ball.y - ball.initialY) - fixY(),
+                                    paint1);
+                            break;
+                    } // How do humans know which mushrooms are safe to eat? Trial and error, my friend.
+
+                }
             }
 
 
@@ -283,6 +296,11 @@ public class GameView
     private void sleep() {
         try { Thread.sleep(SLEEP_MILLIS); }// = 16
         catch (InterruptedException e) {e.printStackTrace();}
+
+        if (thrown)
+            ball.time += 0.016f; // milliseconds don't need to be very precise.
+        else
+            ball.time = 0;
     }
 
 
@@ -397,12 +415,44 @@ public class GameView
 
                 if (ball.getActionDown())
                 {
-                    pullToVelocity(ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY())); // ✓
+                    ball.velocity = (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY() ) / maxBallPull) * ball.MAX_VELOCITY;
+                    // Percent of pull * max velocity
+
+                    ball.velocityX = (float) Math.abs(Math.cos(ball.ballAngle()) * ball.velocity); // ✓
+                    ball.initialVelocityY = (float) Math.abs(Math.sin(ball.ballAngle()) * ball.velocity); // ✓
+                    // Both of these values never change after the ball is thrown.
+
+
 
                     thrown = true;
+
+
+
+
+
+                    Log.d("key19033 i", ball.initialX +" :x <- initial -> y: "+ ball.initialY);
+                    Log.d("key19033 angle", "angle: " + (float) (-1 * Math.toDegrees(ball.ballAngle())));
+
+                    Log.d("key19033 VELOCITY axis",ball.velocityX + "  :x <- VELOCITY -> y:  "+ ball.velocityY);
+                    Log.d("key19033 VELOCITY", "VELOCITY: "+ ball.velocity);
+
+                    Log.d("key99999999999999 time","time: "+ ball.time);
+                    Log.d("key19033 max time","ball.max_height: " + ball.max_height);
+
+
+
+
+                    Log.d("key19033 HEIGHT112","height of ball: "+ball.HEIGHT);
+                    Log.d("key19033 max height","max height: "+ ball.max_height);
+                    Log.d("key19033 range","range: "+ ball.range);
+
+                    Log.d("key19033","_____________________________________________________________________________");
+
                 }
 
                 ball.setActionDown(false);
+
+
 
                 break;
 
@@ -430,20 +480,18 @@ public class GameView
     // general functions
 
 
-    public void pullToVelocity (float pullDistance) // percent of distance from max distance will result in the velocity.
-    {ball.velocity = (pullDistance / maxBallPull) * ball.MAX_VELOCITY;}
 
 
 
-    public void resume() {// discussion: "activity lifecycle"
-
+    public void resume() // discussion: "activity lifecycle"
+    {
         isPlaying = true;
         thread = new Thread(this); // -> "this" is the run() method above.
         thread.start();
     } // resume the game
 
 
-    public void pause()
+    public void pause()  // discussion: "activity lifecycle"
     {
         try {
             isPlaying = false;
@@ -462,4 +510,3 @@ public class GameView
         return gameActivityContext;
     }
 }
-
