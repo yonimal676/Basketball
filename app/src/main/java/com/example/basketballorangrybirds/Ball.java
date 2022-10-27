@@ -29,11 +29,11 @@ public class Ball
     float max_height;
     float range; // of projectile.
     float HEIGHT;
+    boolean thrown;
 
 
-    final float WEIGHT; // kilo
-    final float MAX_VELOCITY; //kmh
-    final float GRAVITY;
+    final float MAX_VELOCITY; //meters per second.
+    float GRAVITY;
     final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
 
@@ -55,20 +55,19 @@ public class Ball
         this.screenY = screenY;
 
         // Basketball court: 28m long  ->  screenX = half a basketball court ( 14m )
-        ratioPXtoM = screenX / 14 ;
+        ratioPXtoM = screenX / 14;
 
         /* This isn't YET coordinated with the real court size */
         x = (int) ( screenX / 8 );             // 1/8 to the right
         y = (int) ( screenY - screenY / 3.5 ); // 1 - 1/3.5 up
 
-
-        initialX = x;
-        initialY = y; // This works because the object:Ball is only initialized once.
-
-
         // basketball diameter 24.1 cm or 0.241 meters
-        width = (short) (0.241 * ratioPXtoM);
-        height = (short) (0.241 * ratioPXtoM);
+        width = (short) (0.241 * 2 * ratioPXtoM);
+        height = (short) (0.241 * 2 * ratioPXtoM);
+
+
+        initialX = x + width /2f;
+        initialY = y + height /2f; // This works because the object:Ball is only initialized once.
 
 
         // Draw the ball:
@@ -78,10 +77,13 @@ public class Ball
 
 
         // Physics-related stuff:
-        GRAVITY = 9.8f;
-        WEIGHT = 0.62f;
-        MAX_VELOCITY = 75.6f * 2; // also max pull
+        GRAVITY = 25 * ratioPXtoM;
+        MAX_VELOCITY = 20 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
+
+/*
+        GRAVITY = 9.8f * ratioPXtoM;
+        MAX_VELOCITY = 25 * ratioPXtoM; // also max pull | meters per second.*/
     }
 
     void setActionDown (boolean ActionDown) {this.isTouch = ActionDown;}
@@ -115,6 +117,31 @@ public class Ball
     float calcDistanceFromI(float x, float y) // To know whether or not the ball is at max distance from i.
     {return (float) Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));}
 
+
+    public void reset () // Experimental
+    {
+        thrown = false; // also resets time in: GameView.java -> sleep() -> if (ball.thrown) !|-> else {ball.time = 0;}
+
+        x = initialX - width / 2f;
+        y = initialY - height / 2f;
+    }
+
+    public String collision (int groundHeight) // we need this for bottom collision
+    {
+
+        if (y + height >= screenY - groundHeight)
+            return "bottom";
+
+        if (x + width >=  screenX)
+            return "right";
+
+        if (x <= 0)
+            return "left";
+
+
+
+        return "none";
+    }
 
 }
 

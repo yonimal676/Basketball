@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class GameActivity extends AppCompatActivity {
 
-    private GameView gameView;
+    GameView gameView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)

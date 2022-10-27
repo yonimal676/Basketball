@@ -24,9 +24,7 @@ public class GameView
 
     private final int maxBallPull;         // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
-    private boolean thrown;
     // General
-
 
     private Background background;
     private Ball ball;
@@ -44,6 +42,7 @@ public class GameView
     private Thread thread;
     private final GameActivity activity;
     private final Context gameActivityContext;
+    byte quarterOfLaunch;
     // Technical stuff
 
 
@@ -90,7 +89,7 @@ public class GameView
         paint2 = new Paint();
         paint2.setColor(Color.GREEN);
         paint2.setStyle(Paint.Style.FILL);
-        paint2.setStrokeWidth(3f);
+        paint2.setStrokeWidth(6f);
 
 
         paint3 = new Paint();
@@ -111,10 +110,12 @@ public class GameView
         showAxis = Bitmap.createScaledBitmap(showAxis, ball.width * 3, ball.height * 3, false);
 
 
-        showAxisBool = 0;
-        thrown = false;
+        showAxisBool = 1;
+        ball.thrown = false;
 
         dotArrayList = new ArrayList<>();
+
+
     }
 
 
@@ -137,36 +138,89 @@ public class GameView
 
     public void update ()
     {
+        if ( ! ball.thrown && ball.getActionDown())
+            quarterOfLaunch = ball.quarter;
 
-        if (thrown) // discussion: physics #17
+        if (ball.thrown)
         {
+            ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) * ball.ratioPXtoM; // ✓
 
-            ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
 
-//            ball.timeAtMax = ball.initialVelocityY / ball.GRAVITY;
-
+            ball.range = ball.velocityX * ball.time;
             ball.velocityY = ball.initialVelocityY - (ball.GRAVITY * ball.time);
 
+            if (ball.velocityY == 0 || ball.x >= ball.range * ball.ratioPXtoM)
+                ball.velocityY *= -1;
 
-            ball.max_height = (float) (ball.velocity * ball.velocity * Math.sin(ball.ballAngle() * Math.sin(ball.ballAngle())
-                                        / (2 * ball.GRAVITY)));
+            ball.max_height = (float) (ball.HEIGHT + ball.velocity * ball.velocity * Math.sin(ball.ballAngle() * Math.sin(ball.ballAngle())
+                    / (2 * ball.GRAVITY)));
 
-           // Log.d("key19033 time elapsed","time elapsed: "+ ball.time);
-
-
-
-            ball.x = ball.initialX + ball.velocityX * ball.time;
-
-            ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-
-            dotArrayList.add(new Dot(ball.x, ball.y, getResources()));
+            // Log.d("key19033 time elapsed","time elapsed: "+ ball.time);
 
 
+            switch (ball.quarter) // discussion: From where has the ball been thrown? #24
+            {
+                case 1:
+                    ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
+                    ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
+                    ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    break;
 
-            if (ball.y == 0)
-                thrown = false;
-        } // if (thrown)
+                case 2:
+                    ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
+                    ball.x = ball.initialX + ball.velocityX * ball.time - fixX(); // to the left
+                    ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    break;
 
+                case 3:
+                    ball.GRAVITY = Math.abs(ball.GRAVITY);
+                    ball.x = ball.initialX + ball.velocityX * ball.time - fixX(); // to the left
+                    ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    break;
+
+                case 4:
+                    ball.GRAVITY = Math.abs(ball.GRAVITY);
+                    ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
+                    ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+            }
+
+
+//                Log.d("key19033293", "yes, this is the first run.");
+
+
+
+                /*
+            else
+                ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+*/
+
+//            dotArrayList.add(new Dot(ball.x + fixX(), ball.y + fixY(), getResources()));
+
+
+
+/*
+        if (ball.thrown) // discussion: physics #17
+        {
+            //discussion: physics #17 (scroll down)
+            // TODO: 26/10/2022  :  ball.thrown should be false at some point here. ↓
+            if (ball.collision(ground.height).equals("bottom")) {
+                ball.velocityY *= -1;
+            }
+
+
+
+
+            // TODO: 26/10/2022 until here.
+
+
+
+
+
+        */
+
+
+
+        }// if (thrown)
     }
 
 
@@ -178,21 +232,12 @@ public class GameView
             Canvas screenCanvas = getHolder().lockCanvas(); // create the canvas
 
 
-            screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint1);
+            screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint1);//background
 
-            screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);
+            screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);//ball
 
+            screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
 
-
-
-
-
-
-
-            screenCanvas.drawLine(ball.initialX - ball.width/3f, ball.initialY - ball.height/3f,
-                    ball.initialX + ball.width/3f, ball.initialY + ball.height/3f, paint2);
-            screenCanvas.drawLine(ball.initialX - ball.width/3f, ball.initialY + ball.height/3f,
-                    ball.initialX + ball.width/3f, ball.initialY - ball.height/3f, paint2);
 
 
 
@@ -208,34 +253,33 @@ public class GameView
                 screenCanvas.drawLine(0, ball.y + fixY(), screenX, ball.y + fixY(), paint4);
                 screenCanvas.drawLine(ball.x + fixX(), 0, ball.x + fixX(), screenY, paint4);
 
-
+//              SHOW BALL HITBOX
                 screenCanvas.drawLine(ball.x, ball.y, ball.x + ball.width, ball.y, paint3);
                 screenCanvas.drawLine(ball.x, ball.y, ball.x, ball.y + ball.height, paint3);
                 screenCanvas.drawLine(ball.x + ball.width, ball.y, ball.x + ball.width, ball.y + ball.height, paint3);
                 screenCanvas.drawLine(ball.x, ball.y + ball.height, ball.x + ball.width, ball.y + ball.height, paint3);
 
 
+
+
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                screenCanvas.drawText(Float.toString((float) (- 180/Math.PI * ball.ballAngle())),100,100, paint2);
+
             }
 
-            screenCanvas.drawBitmap(showAxis, screenX / 2f - ball.width * 3, 0, paint1);
-
-//            Log.d("key123123 MAX POINT",  ball.range /2f + " <- x ||| y -> " + ball.max_height);
-//            screenCanvas.drawBitmap(ball.centerBitmap, ball.x + ball.range/2f / ball.ratioX, screenY - (ball.max_height / ball.ratioY), paint1);
+            screenCanvas.drawBitmap(showAxis, screenX / 2f - ball.width * 3, 0, paint1);//button to show initial axis
 
 
 
 
-
-            if (thrown) {
-                for (Dot dot : dotArrayList)
-                    screenCanvas.drawBitmap(dot.dotBitmap, dot.x, dot.y, paint2);
-            }
-
-            else
+            if ( ! ball.thrown) // draw this line only before the ball is thrown.
                 {
 
                 //discussion: X and Y of stop screenCanvas.DrawLine #15
-                if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width / 2f) {// line should only be drawn outside of the ball
+                if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width / 2f) {
+                    // line should only be drawn when the ball is farther from the center
+                    // than the radius of the ball, otherwise it will be drawn inside the ball itself.
 
                     float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.width / 2f)); // similar to perpAdj
                     float lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.width / 2f)); // similar to perpOpp
@@ -279,11 +323,10 @@ public class GameView
                                     ball.initialY - (ball.y - ball.initialY) - fixY(),
                                     paint1);
                             break;
-                    } // How do humans know which mushrooms are safe to eat? Trial and error, my friend.
+                    }
 
                 }
             }
-
 
             getHolder().unlockCanvasAndPost(screenCanvas);
         }
@@ -297,10 +340,12 @@ public class GameView
         try { Thread.sleep(SLEEP_MILLIS); }// = 16
         catch (InterruptedException e) {e.printStackTrace();}
 
-        if (thrown)
-            ball.time += 0.016f; // milliseconds don't need to be very precise.
+        //count time from throw:
+        if (ball.thrown)
+            ball.time += 0.032f; // milliseconds don't need to be very precise because the screen sleeps 16 MS anyway.
         else
             ball.time = 0;
+
     }
 
 
@@ -329,11 +374,16 @@ public class GameView
 
             case MotionEvent.ACTION_DOWN:// started touch
 
-                if (ball.isTouching(event.getX(),event.getY()))
+                if (ball.isTouching(event.getX(),event.getY()) && ! ball.thrown)
                     ball.setActionDown(true);                   // 'ball' has a boolean method that indicates whether the object is touched.
 
 
-                if (event.getRawX() >= screenX /2f - ball.width * 3 && event.getRawX() <= screenX /2f + ball.width * 3
+
+                if (ball.calcDistanceFromI(ball.x, ball.y) > maxBallPull)
+                    if (ball.calcDistanceFromI(event.getX(), event.getY()) <= maxBallPull)
+                        ball.reset();
+
+                    if (event.getRawX() >= screenX /2f - ball.width * 3 && event.getRawX() <= screenX /2f + ball.width * 3
                     && event.getRawY() >= 0 && event.getRawY() <= ball.height * 3)
                 {
                     if (showAxisBool == 0)
@@ -424,7 +474,7 @@ public class GameView
 
 
 
-                    thrown = true;
+                    ball.thrown = true;
 
 
 
