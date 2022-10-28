@@ -11,8 +11,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
-import java.util.ArrayList;
-
 public class GameView
         extends SurfaceView implements Runnable
 {
@@ -28,7 +26,6 @@ public class GameView
 
     private Background background;
     private Ball ball;
-    private ArrayList<Dot> dotArrayList;
     private Player player;
     private Basket basket;
     private Ground ground;
@@ -94,9 +91,9 @@ public class GameView
 
         paint3 = new Paint();
         paint3.setColor(Color.RED);
-        paint3.setStyle(Paint.Style.FILL_AND_STROKE);
-        paint3.setPathEffect(new DashPathEffect(new float[]{1, 4}, 0)); // array of ON and OFF distances,
+        paint3.setStyle(Paint.Style.FILL);
         paint3.setStrokeWidth(3f);
+        //ball hit-box
 
 
         paint4 = new Paint();
@@ -113,7 +110,6 @@ public class GameView
         showAxisBool = 1;
         ball.thrown = false;
 
-        dotArrayList = new ArrayList<>();
 
 
     }
@@ -126,6 +122,8 @@ public class GameView
     {
         while (isPlaying)
         { // run only if we play.
+
+
             update();//The screen
             draw();//The components
             sleep();//To render
@@ -136,7 +134,7 @@ public class GameView
 
 
 
-    public void update ()
+    public void update () // issue: physics #25
     {
         if ( ! ball.thrown && ball.getActionDown())
             quarterOfLaunch = ball.quarter;
@@ -185,39 +183,10 @@ public class GameView
             }
 
 
-//                Log.d("key19033293", "yes, this is the first run.");
 
 
-
-                /*
-            else
-                ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
-*/
-
-//            dotArrayList.add(new Dot(ball.x + fixX(), ball.y + fixY(), getResources()));
-
-
-
-/*
-        if (ball.thrown) // discussion: physics #17
-        {
-            //discussion: physics #17 (scroll down)
-            // TODO: 26/10/2022  :  ball.thrown should be false at some point here. ↓
-            if (ball.collision(ground.height).equals("bottom")) {
-                ball.velocityY *= -1;
-            }
-
-
-
-
-            // TODO: 26/10/2022 until here.
-
-
-
-
-
-        */
-
+            ball.dotArrayListX.add((short) (ball.x + fixX()));
+            ball.dotArrayListY.add((short) (ball.y + fixY()));
 
 
         }// if (thrown)
@@ -232,12 +201,17 @@ public class GameView
             Canvas screenCanvas = getHolder().lockCanvas(); // create the canvas
 
 
+
             screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint1);//background
 
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);//ball
 
             screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
 
+
+            for (int i = 0; i < ball.dotArrayListX.size(); i++) {
+                screenCanvas.drawPoint(ball.dotArrayListX.get(i) , ball.dotArrayListY.get(i) , paint1);
+            }
 
 
 
@@ -274,7 +248,7 @@ public class GameView
 
 
             if ( ! ball.thrown) // draw this line only before the ball is thrown.
-                {
+            {
 
                 //discussion: X and Y of stop screenCanvas.DrawLine #15
                 if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width / 2f) {
@@ -383,8 +357,8 @@ public class GameView
                     if (ball.calcDistanceFromI(event.getX(), event.getY()) <= maxBallPull)
                         ball.reset();
 
-                    if (event.getRawX() >= screenX /2f - ball.width * 3 && event.getRawX() <= screenX /2f + ball.width * 3
-                    && event.getRawY() >= 0 && event.getRawY() <= ball.height * 3)
+                if (event.getRawX() >= screenX /2f - ball.width * 3 && event.getRawX() <= screenX /2f + ball.width * 3
+                        && event.getRawY() >= 0 && event.getRawY() <= ball.height * 3)
                 {
                     if (showAxisBool == 0)
                         showAxisBool = 1;

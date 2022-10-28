@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 
+import java.util.ArrayList;
+
 public class Ball
 {
     //short min value is -32,768 and max value is 32,767 (inclusive).
@@ -37,6 +39,9 @@ public class Ball
     final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
 
+
+    ArrayList<Short> dotArrayListX;
+    ArrayList<Short> dotArrayListY;
 
 
 
@@ -77,13 +82,23 @@ public class Ball
 
 
         // Physics-related stuff:
-        GRAVITY = 25 * ratioPXtoM;
-        MAX_VELOCITY = 20 * ratioPXtoM; // also max pull | meters per second.
+        GRAVITY = 9.8f * ratioPXtoM;
+        MAX_VELOCITY = 17 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
 /*
         GRAVITY = 9.8f * ratioPXtoM;
-        MAX_VELOCITY = 25 * ratioPXtoM; // also max pull | meters per second.*/
+        MAX_VELOCITY = 17 * ratioPXtoM; // also max pull | meters per second.*/
+
+
+
+
+
+
+
+        dotArrayListX = new ArrayList<>();
+        dotArrayListY = new ArrayList<>();
+
     }
 
     void setActionDown (boolean ActionDown) {this.isTouch = ActionDown;}
