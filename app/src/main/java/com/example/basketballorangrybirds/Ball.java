@@ -139,6 +139,10 @@ public class Ball
 
         x = initialX - width / 2f;
         y = initialY - height / 2f;
+
+        dotArrayListX.clear();
+        dotArrayListY.clear();
+
     }
 
     public String collision (int groundHeight) // we need this for bottom collision
