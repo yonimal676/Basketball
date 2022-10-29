@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
@@ -28,13 +27,14 @@ public class GameView
     private Ball ball;
     private Player player;
     private Basket basket;
-    private Ground ground;
+    private final Ground ground;
     // Objects
 
 
+//    private final float ratioX , ratioY;
     private final int screenX , screenY;
-    private final float ratioX , ratioY;
-    private final byte SLEEP_MILLIS = 16; // byte is like int, refresh rate is (1000 / SLEEP_MILLIS)
+    private final byte SLEEP_MILLIS = 16; // byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 fps)
+    private float game_time;
     private boolean isPlaying;
     private Thread thread;
     private final GameActivity activity;
@@ -45,7 +45,6 @@ public class GameView
 
     private Bitmap showAxis;   // screen axis in comparison to initial ball place #12
     private byte showAxisBool; // 0 -> false, 1 -> true
-    private boolean didOnlyTouch;// if the ball hasn't been dragged, only touched.
 
 
     public GameView(GameActivity activity, int screenX,  int screenY)
@@ -58,8 +57,8 @@ public class GameView
         this.screenX = screenX;
         this.screenY = screenY;
 
-        ratioX = 1080f / screenX; // side to side
-        ratioY = 1920f / screenY; // top to bottom
+/*        ratioX = 1080f / screenX; // side to side
+        ratioY = 1920f / screenY; // top to bottom*/
 
 
         isPlaying = true;
@@ -74,6 +73,8 @@ public class GameView
 
         maxBallPull = (int) (ball.width / 2f * 6); // the radius of max dist of the ball from the initial position
 
+
+        game_time = 0;
 
 
         paint1 = new Paint();
@@ -109,10 +110,6 @@ public class GameView
 
         showAxisBool = 1;
         ball.thrown = false;
-        didOnlyTouch = false;
-
-
-
     }
 
 
@@ -129,8 +126,6 @@ public class GameView
             draw();//The components
             sleep();//To render
 
-//            logs("quarter");
-            logs("velocity");
         }
     }
 
@@ -138,25 +133,24 @@ public class GameView
 
     public void update () // issue: physics #25
     {
-
-
-        // TODO: 28/10/2022  FREE-FALL PHYSICS WHEN ANGLE IS 90, -90, 0, 0
-
+        //discussion (bug fix): physics don't work when angle is -90 or 90 #29
 
 
         if ( ! ball.thrown && ball.getActionDown())
-            quarterOfLaunch = ball.quarter;
+            quarterOfLaunch = ball.quarter; // discussion: From where has the ball been thrown? #24
 
         if (ball.thrown)
         {
-            ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) * ball.ratioPXtoM; // ✓
+            if (ball.y > screenY)
+                ball.HEIGHT =  -1 * Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
+            else
+                ball.HEIGHT =Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
 
 
             ball.range = ball.velocityX * ball.time;
             ball.velocityY = ball.initialVelocityY - (ball.GRAVITY * ball.time);
 
-            if (ball.velocityY == 0 || ball.x >= ball.range * ball.ratioPXtoM)
-                ball.velocityY *= -1;
+
 
             ball.max_height = (float) (ball.HEIGHT + ball.velocity * ball.velocity * Math.sin(ball.ballAngle() * Math.sin(ball.ballAngle())
                     / (2 * ball.GRAVITY)));
@@ -166,12 +160,6 @@ public class GameView
 
             switch (ball.quarter) // discussion: From where has the ball been thrown? #24 || physics #17
             {
-                case -2:
-
-                    break;
-                case -1: // only touched, not thrown to any direction.
-                    ball.thrown = false;
-                    break;
                 case 1:
                     ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
                     ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
@@ -223,8 +211,9 @@ public class GameView
             screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
 
 
-            for (int i = 0; i < ball.dotArrayListX.size() - (ball.MAX_VELOCITY / ball.velocity); i++)
-                screenCanvas.drawPoint(ball.dotArrayListX.get(i) , ball.dotArrayListY.get(i) , paint1);
+            if (ball.thrown && ball.time >= 0.016) // otherwise the app collapses when we reset the ball.
+                for (int i = 0; i < ball.dotArrayListX.size() - (ball.MAX_VELOCITY / ball.velocity)  - 1; i++)
+                    screenCanvas.drawPoint(ball.dotArrayListX.get(i) , ball.dotArrayListY.get(i) , paint1);
             // discussion: The Dots look disgusting #28
 
 
@@ -251,7 +240,18 @@ public class GameView
 
                 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                screenCanvas.drawText(Float.toString((float) (- 180/Math.PI * ball.ballAngle())),100,100, paint2);
+                screenCanvas.drawText("X: "+ ball.x + fixX(),75,50, paint2);
+                screenCanvas.drawText("Y: "+ ball.y + fixY(),75,75, paint2);
+                screenCanvas.drawText("Angle: "+ (float) (180 / Math.PI * ball.ballAngle()),75,125, paint2);
+                screenCanvas.drawText("velocity: "+ ball.velocity,75,175, paint2);
+                screenCanvas.drawText("velocityX: "+ ball.velocityX,75,200, paint2);
+                screenCanvas.drawText("velocityY: "+ ball.velocityY,75,225, paint2);
+                screenCanvas.drawText("HEIGHT: "+ ball.HEIGHT,75,250, paint2);
+                screenCanvas.drawText("time: "+ ball.time,75,275, paint2);
+                screenCanvas.drawText("Time: "+ game_time,screenX - 175,125, paint2);
+
+
+
 
             }
 
@@ -262,6 +262,10 @@ public class GameView
 
             if ( ! ball.thrown) // draw this line only before the ball is thrown.
             {
+                ball.velocity = 0;
+                ball.velocityX = 0;
+                ball.velocityY = 0;
+
 
                 //discussion: X and Y of stop screenCanvas.DrawLine #15
                 if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width / 2f) {
@@ -329,9 +333,11 @@ public class GameView
 
         //count time from throw:
         if (ball.thrown)
-            ball.time += 0.032f; // milliseconds don't need to be very precise because the screen sleeps 16 MS anyway.
+            ball.time += 0.032f; // discussion: Time updating #33
         else
             ball.time = 0;
+
+        game_time += 0.016f;
     }
 
 
@@ -391,12 +397,7 @@ public class GameView
                     float angle_of_touch = ball.findAngleWhenOutside(event.getX(), event.getY()); // also sets ball.angle
 
 
-                    if (Math.abs(180 / Math.PI * angle_of_touch) == 90) {
-                        if (ball.y + ball.height < 0)
-                            ball.velocityY *= -1;
-                    }
-
-                    else if (Math.abs(180 / Math.PI * angle_of_touch) > 90)
+                    if (Math.abs(180 / Math.PI * angle_of_touch) > 90)
                     {
                         if (180 / Math.PI * angle_of_touch >= 0)
                             setBallQuarter((byte) 1); // top right corner
@@ -407,7 +408,6 @@ public class GameView
                     {
                         if (180 / Math.PI * angle_of_touch >= 0)
                             setBallQuarter((byte) 2); // top left corner
-
                         else
                             setBallQuarter((byte) 3); // bottom left corner
                     }
@@ -418,7 +418,7 @@ public class GameView
 
 
 
-                        if (ball.calcDistanceFromI(event.getX(), event.getY()) < maxBallPull) // in drag-able circle
+                    if (ball.calcDistanceFromI(event.getX(), event.getY()) < maxBallPull) // in drag-able circle
                         ball.setPosition(event.getX(), event.getY());
 
 
@@ -456,21 +456,25 @@ public class GameView
 
             case MotionEvent.ACTION_UP: // ended touch
 
-
-                if (ball.getActionDown())
+                if (ball.getActionDown()) // if touched the ball in the first place.
                 {
-
-                    ball.velocity = (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY() ) / maxBallPull) * ball.MAX_VELOCITY;
-                    // Percent of pull * max velocity
-
-                    ball.velocityX = (float) Math.abs(Math.cos(ball.ballAngle()) * ball.velocity); // ✓
-                    ball.initialVelocityY = (float) Math.abs(Math.sin(ball.ballAngle()) * ball.velocity); // ✓
-                    // Both of these values never change after the ball is thrown.
+                    if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) < ball.width / 2f)
+                    {
+                        ball.x = ball.initialX - fixX();
+                        ball.y = ball.initialY - fixY();
+                    } // discussion: Disable ball movement when only touched briefly #31
 
 
+                    else {
+                        ball.velocity = (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) / maxBallPull) * ball.MAX_VELOCITY;
+                        // Percent of pull * max velocity
 
-                    ball.thrown = true;
+                        ball.velocityX = (float) Math.abs(Math.cos(ball.ballAngle()) * ball.velocity); // ✓
+                        ball.initialVelocityY = (float) Math.abs(Math.sin(ball.ballAngle()) * ball.velocity); // ✓
+                        // Both of these values never change after the ball is thrown.
 
+                        ball.thrown = true;
+                    }
 
 
 
@@ -478,11 +482,9 @@ public class GameView
 
                 ball.setActionDown(false);
 
-
                 break;
 
         }
-
 
         return true;
     }
@@ -505,43 +507,6 @@ public class GameView
     // general functions
 
 
-    public void logs (String str)
-    {
-        switch (str)
-        {
-            case "time":
-                Log.d("keyLogs","time elapsed: "+ ball.time);
-                break;
-
-            case "quarter":
-                Log.d("keyLogs", "ball quarter: " + ball.quarter);
-                break;
-
-            case "initial":
-                Log.d("keyLogs", ball.initialX +" :x <- initial -> y: "+ ball.initialY);
-                break;
-
-            case "velocity":
-                Log.d("keyLogs", "VELOCITY: "+ ball.velocity +" || "+ ball.velocityX + "  :x <- VELOCITY -> y:  "+ ball.velocityY);
-                break;
-
-            case "angle":
-                Log.d("keyLogs", "angle: " + (float) (-1 * Math.toDegrees(ball.ballAngle())));
-                break;
-
-            case "height":
-                Log.d("keyLogs","height of ball: " + ball.HEIGHT);
-                break;
-
-            case "max_height":
-                Log.d("keyLogs","max height: "+ ball.max_height);
-                break;
-
-            case "range":
-                Log.d("keyLogs","range: " + ball.range);
-                break;
-        }
-    }
 
 
 
