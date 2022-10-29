@@ -40,8 +40,8 @@ public class Ball
 
 
 
-    ArrayList<Short> dotArrayListX;
-    ArrayList<Short> dotArrayListY;
+    ArrayList<Float> dotArrayListX;
+    ArrayList<Float> dotArrayListY;
 
 
 
@@ -141,8 +141,7 @@ public class Ball
         y = initialY - height / 2f;
 
         dotArrayListX.clear();
-        dotArrayListY.clear();
-
+        dotArrayListY.clear(); // otherwise the dots would stay permanently.
     }
 
     public String collision (int groundHeight) // we need this for bottom collision
