@@ -83,7 +83,7 @@ public class Ball
 
         // Physics-related stuff:
         GRAVITY = 9.8f * ratioPXtoM;
-        MAX_VELOCITY = 17 * ratioPXtoM; // also max pull | meters per second.
+        MAX_VELOCITY = 13 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
 /*

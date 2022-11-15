@@ -132,22 +132,23 @@ public class GameView
 
 
     public void update () // issue: physics #25
-    {
-        //discussion (bug fix): physics don't work when angle is -90 or 90 #29
+    {//discussion (bug fix): physics don't work when angle is -90 or 90 #29
 
 
-        if ( ! ball.thrown && ball.getActionDown())
+        if ( ! ball.thrown && ball.getActionDown()) // get quarter right before the ball is thrown.
             quarterOfLaunch = ball.quarter; // discussion: From where has the ball been thrown? #24
+
 
         if (ball.thrown)
         {
-            if (ball.y > screenY)
+            if (ball.y > screenY) // make the height logical and not technical.
                 ball.HEIGHT =  -1 * Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
             else
-                ball.HEIGHT =Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
+                ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
 
 
-            ball.range = ball.velocityX * ball.time;
+
+
             ball.velocityY = ball.initialVelocityY - (ball.GRAVITY * ball.time);
 
 
@@ -249,7 +250,7 @@ public class GameView
                 screenCanvas.drawText("HEIGHT: "+ ball.HEIGHT,75,250, paint2);
                 screenCanvas.drawText("time: "+ ball.time,75,275, paint2);
                 screenCanvas.drawText("Time: "+ game_time,screenX - 175,125, paint2);
-
+                screenCanvas.drawText("range: "+ ball.range,75,300, paint2);
 
 
 
@@ -326,14 +327,13 @@ public class GameView
 
 
 
-
     private void sleep() {
         try { Thread.sleep(SLEEP_MILLIS); }// = 16
         catch (InterruptedException e) {e.printStackTrace();}
 
         //count time from throw:
         if (ball.thrown)
-            ball.time += 0.032f; // discussion: Time updating #33
+            ball.time += 0.016f * 2.3f; // discussion: Time updating #33
         else
             ball.time = 0;
 
@@ -473,7 +473,10 @@ public class GameView
                         ball.initialVelocityY = (float) Math.abs(Math.sin(ball.ballAngle()) * ball.velocity); // ✓
                         // Both of these values never change after the ball is thrown.
 
+
+
                         ball.thrown = true;
+
                     }
 
 
