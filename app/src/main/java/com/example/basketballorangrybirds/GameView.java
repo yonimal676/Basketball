@@ -21,6 +21,7 @@ public class GameView
 
     private final int maxBallPull;         // radius of the circle which determines max dist. ball from initial point
     private float perpOpp, perpAdj;
+    private float percentOfPull;
     // General
 
     private Background background;
@@ -31,7 +32,7 @@ public class GameView
     // Objects
 
 
-//    private final float ratioX , ratioY;
+    //    private final float ratioX , ratioY;
     private final int screenX , screenY;
     private final byte SLEEP_MILLIS = 16; // byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 fps)
     private float game_time;
@@ -110,6 +111,7 @@ public class GameView
 
         showAxisBool = 1;
         ball.thrown = false;
+        percentOfPull = 0;
     }
 
 
@@ -124,7 +126,20 @@ public class GameView
 
             update();//The screen
             draw();//The components
-            sleep();//To render
+            sleep();//To render motion
+
+
+
+
+            if (ball.thrown) {
+
+                if (ball.didCollide()) {
+                    if (ball.x <= 0) {
+                        ball.velocityX = -1 * Math.abs(ball.velocityX); // flip once
+                    }
+                }
+
+            }
 
         }
     }
@@ -162,8 +177,14 @@ public class GameView
             switch (ball.quarter) // discussion: From where has the ball been thrown? #24 || physics #17
             {
                 case 1:
-                    ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
-                    ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
+                    ball.GRAVITY = -1 * Math.abs(ball.GRAVITY); // because of: screen axis in comparison to initial ball place #12
+
+                    if (ball.didCollideVariable)
+                        ball.x = ball.velocityX * ball.time - fixX(); // to the left
+                    else
+                        ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
+
+
                     ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
                     break;
 
@@ -182,7 +203,18 @@ public class GameView
                 case 4:
                     ball.GRAVITY = Math.abs(ball.GRAVITY);
                     ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
-                    ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+
+
+                    if (ball.didCollideVariable) {
+                        ball.x = ball.velocityX * ball.time - fixX(); // to the left
+                        ball.y = (float) ( ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+
+                    }
+
+                    else {
+                        ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
+                        ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    }
             }
 
 
@@ -241,6 +273,9 @@ public class GameView
 
                 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
+
                 screenCanvas.drawText("X: "+ ball.x + fixX(),75,50, paint2);
                 screenCanvas.drawText("Y: "+ ball.y + fixY(),75,75, paint2);
                 screenCanvas.drawText("Angle: "+ (float) (180 / Math.PI * ball.ballAngle()),75,125, paint2);
@@ -251,6 +286,9 @@ public class GameView
                 screenCanvas.drawText("time: "+ ball.time,75,275, paint2);
                 screenCanvas.drawText("Time: "+ game_time,screenX - 175,125, paint2);
                 screenCanvas.drawText("range: "+ ball.range,75,300, paint2);
+
+                screenCanvas.drawText("did collide: "+ ball.didCollideVariable,75,325, paint2);
+
 
 
 
@@ -333,7 +371,13 @@ public class GameView
 
         //count time from throw:
         if (ball.thrown)
-            ball.time += 0.016f * 2.3f; // discussion: Time updating #33
+        {
+            float exponential = 1.003f;
+            for (int i = 0; i < percentOfPull * 10; i++)
+                exponential = (float) Math.pow(exponential, 1.5);
+
+            ball.time += 0.016f * 2.5 * exponential; // discussion: Time updating #33
+        }
         else
             ball.time = 0;
 
@@ -375,6 +419,7 @@ public class GameView
                     if (ball.calcDistanceFromI(event.getX(), event.getY()) <= maxBallPull)
                         ball.reset();
 
+
                 if (event.getRawX() >= screenX /2f - ball.width * 3 && event.getRawX() <= screenX /2f + ball.width * 3
                         && event.getRawY() >= 0 && event.getRawY() <= ball.height * 3)
                 {
@@ -390,7 +435,6 @@ public class GameView
 
             case MotionEvent.ACTION_MOVE: // pressed and moving
             {
-
                 if (ball.getActionDown()) // if touched the ball
                 {
 
@@ -458,7 +502,7 @@ public class GameView
 
                 if (ball.getActionDown()) // if touched the ball in the first place.
                 {
-                    if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) < ball.width / 2f)
+                    if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) < ball.width)
                     {
                         ball.x = ball.initialX - fixX();
                         ball.y = ball.initialY - fixY();
@@ -466,7 +510,10 @@ public class GameView
 
 
                     else {
-                        ball.velocity = (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) / maxBallPull) * ball.MAX_VELOCITY;
+
+                        percentOfPull = ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) / maxBallPull;
+
+                        ball.velocity = percentOfPull * ball.MAX_VELOCITY;
                         // Percent of pull * max velocity
 
                         ball.velocityX = (float) Math.abs(Math.cos(ball.ballAngle()) * ball.velocity); // ✓

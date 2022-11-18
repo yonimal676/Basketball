@@ -31,6 +31,7 @@ public class Ball
     float max_height;
     float range; // of projectile.
     float HEIGHT;
+    float angle;
     boolean thrown;
 
 
@@ -38,6 +39,7 @@ public class Ball
     float GRAVITY;
     final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
+    boolean didCollideVariable;
 
 
     ArrayList<Float> dotArrayListX;
@@ -83,17 +85,11 @@ public class Ball
 
         // Physics-related stuff:
         GRAVITY = 9.8f * ratioPXtoM;
-        MAX_VELOCITY = 13 * ratioPXtoM; // also max pull | meters per second.
+        MAX_VELOCITY = 12 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
-/*
-        GRAVITY = 9.8f * ratioPXtoM;
-        MAX_VELOCITY = 17 * ratioPXtoM; // also max pull | meters per second.*/
 
-
-
-
-
+        didCollideVariable = false;
 
 
         dotArrayListX = new ArrayList<>();
@@ -129,6 +125,14 @@ public class Ball
     {return (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));}
 
 
+    float ballAngleCollision() // 'findAngleWhenOutside()' isn't enough because it only updates when touch is outside max dist.
+    {
+        if (didCollide())
+            return 180 - ballAngle();
+        return (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));
+    }
+
+
     float calcDistanceFromI(float x, float y) // To know whether or not the ball is at max distance from i.
     {return (float) Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));}
 
@@ -136,6 +140,7 @@ public class Ball
     public void reset () // Experimental
     {
         thrown = false; // also resets time in: GameView.java -> sleep() -> if (ball.thrown) !|-> else {ball.time = 0;}
+        didCollideVariable = false;
 
         x = initialX - width / 2f;
         y = initialY - height / 2f;
@@ -144,21 +149,22 @@ public class Ball
         dotArrayListY.clear(); // otherwise the dots would stay permanently.
     }
 
-    public String collision (int groundHeight) // we need this for bottom collision
+
+    public boolean didCollide () // we need this for bottom collision
     {
 
-        if (y + height >= screenY - groundHeight)
-            return "bottom";
+        if ( ! didCollideVariable) {
+            if (y + height >= screenY /*- groundHeight*/)
+                didCollideVariable = true;
 
-        if (x + width >=  screenX)
-            return "right";
+            else if (x + width >= screenX)
+                didCollideVariable = true;
 
-        if (x <= 0)
-            return "left";
+            else if (x <= 0)
+                didCollideVariable = true;
+        }
 
-
-
-        return "none";
+        return didCollideVariable;
     }
 
 }
