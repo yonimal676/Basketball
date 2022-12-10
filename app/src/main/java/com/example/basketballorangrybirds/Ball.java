@@ -7,6 +7,7 @@ import android.graphics.Rect;
 
 import java.util.ArrayList;
 
+
 public class Ball
 {
     //short min value is -32,768 and max value is 32,767 (inclusive).
@@ -27,11 +28,9 @@ public class Ball
 
     float velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
     float time;
-//    float timeAtMax;
     float max_height;
     float range; // of projectile.
     float HEIGHT;
-    float angle;
     boolean thrown;
 
 
@@ -39,8 +38,8 @@ public class Ball
     float GRAVITY;
     final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
-    boolean didCollideVariable;
-
+    boolean didCollideWithFloor;
+    boolean haveBeenTrue;
 
     ArrayList<Float> dotArrayListX;
     ArrayList<Float> dotArrayListY;
@@ -65,8 +64,8 @@ public class Ball
         ratioPXtoM = screenX / 14;
 
         /* This isn't YET coordinated with the real court size */
-        x = (int) ( screenX / 8 );             // 1/8 to the right
-        y = (int) ( screenY - screenY / 3.5 ); // 1 - 1/3.5 up
+        x = (int) ( screenX - 2 * ratioPXtoM );
+        y = (int) ( screenY - 2 * ratioPXtoM );
 
         // basketball diameter 24.1 cm or 0.241 meters
         width = (short) (0.241 * 2 * ratioPXtoM);
@@ -89,8 +88,8 @@ public class Ball
         time = 0;
 
 
-        didCollideVariable = false;
-
+        didCollideWithFloor = false;
+        haveBeenTrue = false;
 
         dotArrayListX = new ArrayList<>();
         dotArrayListY = new ArrayList<>();
@@ -101,8 +100,7 @@ public class Ball
     boolean getActionDown() {return isTouch;}
 
 
-    Rect getRektLol () {return new Rect((int) x,(int) y, (int) (x + width), (int) (y + height ));}
-    //(⌐■_■)✧
+    Rect getRect () {return new Rect((int) x,(int) y, (int) (x + width), (int) (y + height ));}
 
 
     boolean isTouching (float x, float y) // Did touch in bounds?
@@ -127,8 +125,8 @@ public class Ball
 
     float ballAngleCollision() // 'findAngleWhenOutside()' isn't enough because it only updates when touch is outside max dist.
     {
-        if (didCollide())
-            return 180 - ballAngle();
+/*        if (didCollide())
+            return 180 - ballAngle();*/
         return (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));
     }
 
@@ -140,7 +138,8 @@ public class Ball
     public void reset () // Experimental
     {
         thrown = false; // also resets time in: GameView.java -> sleep() -> if (ball.thrown) !|-> else {ball.time = 0;}
-        didCollideVariable = false;
+        didCollideWithFloor = false;
+        haveBeenTrue = false;
 
         x = initialX - width / 2f;
         y = initialY - height / 2f;
@@ -150,22 +149,21 @@ public class Ball
     }
 
 
-    public boolean didCollide () // we need this for bottom collision
+
+    public boolean didCollideWithFloor ()
     {
-
-        if ( ! didCollideVariable) {
-            if (y + height >= screenY /*- groundHeight*/)
-                didCollideVariable = true;
-
-            else if (x + width >= screenX)
-                didCollideVariable = true;
-
-            else if (x <= 0)
-                didCollideVariable = true;
+        if (y + height >= screenY - (ratioPXtoM * 0.4))
+        {
+            if ( ! haveBeenTrue)
+                didCollideWithFloor = true;
+            else
+                haveBeenTrue = true;
         }
 
-        return didCollideVariable;
+        return !haveBeenTrue && didCollideWithFloor;
     }
+    // Makes sure that it flips once.
+    // I need this because the ball will move up after hit - and because this method is called every run, I need to check like this.
 
 }
 

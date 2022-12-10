@@ -110,6 +110,8 @@ public class GameView
 
 
         showAxisBool = 1;
+
+
         ball.thrown = false;
         percentOfPull = 0;
     }
@@ -122,25 +124,9 @@ public class GameView
     {
         while (isPlaying)
         { // run only if we play.
-
-
             update();//The screen
             draw();//The components
             sleep();//To render motion
-
-
-
-
-            if (ball.thrown) {
-
-                if (ball.didCollide()) {
-                    if (ball.x <= 0) {
-                        ball.velocityX = -1 * Math.abs(ball.velocityX); // flip once
-                    }
-                }
-
-            }
-
         }
     }
 
@@ -178,43 +164,37 @@ public class GameView
             {
                 case 1:
                     ball.GRAVITY = -1 * Math.abs(ball.GRAVITY); // because of: screen axis in comparison to initial ball place #12
-
-                    if (ball.didCollideVariable)
-                        ball.x = ball.velocityX * ball.time - fixX(); // to the left
-                    else
-                        ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
-
-
+                    ball.x = ball.initialX - ball.velocityX * ball.time - fixX();
                     ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
                     break;
 
                 case 2:
                     ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
-                    ball.x = ball.initialX + ball.velocityX * ball.time - fixX(); // to the left
+                    ball.x = ball.initialX + ball.velocityX * ball.time - fixX();
                     ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
                     break;
 
                 case 3:
                     ball.GRAVITY = Math.abs(ball.GRAVITY);
-                    ball.x = ball.initialX + ball.velocityX * ball.time - fixX(); // to the left
+                    ball.x = ball.initialX + ball.velocityX * ball.time - fixX();
                     ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
                     break;
 
                 case 4:
                     ball.GRAVITY = Math.abs(ball.GRAVITY);
-                    ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
+                    ball.x = ball.initialX - ball.velocityX * ball.time - fixX();
 
 
-                    if (ball.didCollideVariable) {
+/*                    if (ball.didCollideVariable) {
                         ball.x = ball.velocityX * ball.time - fixX(); // to the left
                         ball.y = (float) ( ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
 
-                    }
+                    }*/
 
-                    else {
-                        ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
-                        ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
-                    }
+                    // else {
+                    ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
+                    ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    //}
             }
 
 
@@ -242,6 +222,9 @@ public class GameView
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);//ball
 
             screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
+
+            screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);
+
 
 
             if (ball.thrown && ball.time >= 0.016) // otherwise the app collapses when we reset the ball.
@@ -287,7 +270,7 @@ public class GameView
                 screenCanvas.drawText("Time: "+ game_time,screenX - 175,125, paint2);
                 screenCanvas.drawText("range: "+ ball.range,75,300, paint2);
 
-                screenCanvas.drawText("did collide: "+ ball.didCollideVariable,75,325, paint2);
+                screenCanvas.drawText("did collide: "+ ball.didCollideWithFloor(),75,325, paint2);
 
 
 
