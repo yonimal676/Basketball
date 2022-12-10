@@ -10,8 +10,7 @@ import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 
-public class GameView
-        extends SurfaceView implements Runnable
+public class GameView extends SurfaceView implements Runnable
 {
 
     private final Paint paint1;            // precursor of throw trajectory.
@@ -36,11 +35,14 @@ public class GameView
     private final int screenX , screenY;
     private final byte SLEEP_MILLIS = 16; // byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 fps)
     private float game_time;
+    private float removeBall_time; // counts how much has ball.x < 0
     private boolean isPlaying;
     private Thread thread;
     private final GameActivity activity;
     private final Context gameActivityContext;
     byte quarterOfLaunch;
+    boolean isBallXUnderZero = false;
+
     // Technical stuff
 
 
@@ -114,6 +116,7 @@ public class GameView
 
         ball.thrown = false;
         percentOfPull = 0;
+        removeBall_time = 0;
     }
 
 
@@ -182,19 +185,8 @@ public class GameView
 
                 case 4:
                     ball.GRAVITY = Math.abs(ball.GRAVITY);
-                    ball.x = ball.initialX - ball.velocityX * ball.time - fixX();
-
-
-/*                    if (ball.didCollideVariable) {
-                        ball.x = ball.velocityX * ball.time - fixX(); // to the left
-                        ball.y = (float) ( ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
-
-                    }*/
-
-                    // else {
                     ball.x = ball.initialX - ball.velocityX * ball.time - fixX(); // to the left
                     ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
-                    //}
             }
 
 
@@ -223,7 +215,6 @@ public class GameView
 
             screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
 
-            screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);
 
 
 
@@ -365,6 +356,16 @@ public class GameView
             ball.time = 0;
 
         game_time += 0.016f;
+
+        if (ball.x < 0 && removeBall_time == 0) {
+            removeBall_time = ball.time;
+            isBallXUnderZero = true;
+        }
+
+        if (ball.time - removeBall_time > 1 && isBallXUnderZero)
+            ball.reset();
+
+
     }
 
 
