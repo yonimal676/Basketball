@@ -6,15 +6,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 
 import java.util.ArrayList;
-
+//short min value is -32,768 and max value is 32,767 (inclusive).
+//byte min value is -128 and max value is 127 (inclusive)
 
 public class Ball
 {
-    //short min value is -32,768 and max value is 32,767 (inclusive).
-    //byte min value is -128 and max value is 127 (inclusive)
-
-
-
     float x, y;
     short width, height;  //short is like int
     boolean isTouch = false;     // true => touchDown (on the screen).
@@ -24,37 +20,26 @@ public class Ball
     float initialX, initialY;  // acts as the (0,0) point relative to the ball.
     float screenX, screenY;
     byte quarter;
+    float angle;
 
 
     float velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
     float time;
-    float max_height;
     float range; // of projectile.
     float HEIGHT;
     boolean thrown;
-
 
     final float MAX_VELOCITY; //meters per second.
     float GRAVITY;
     final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
-    boolean didCollideWithFloor;
-    boolean haveBeenTrue;
+    boolean didCollide;
 
     ArrayList<Float> dotArrayListX;
     ArrayList<Float> dotArrayListY;
 
 
 
-
-
-
-
-    /*
-     the middle of the rim is 4.191 meters from free throw line
-     the optimal launch angle for a 6 feet person is 50.8
-     the speed at which there will be a score is 28.968 kmh
-      */
     public Ball (Resources res, float screenX, float screenY)
     {
         this.screenX = screenX;
@@ -63,17 +48,17 @@ public class Ball
         // Basketball court: 28m long  ->  screenX = half a basketball court ( 14m )
         ratioPXtoM = screenX / 14;
 
-        /* This isn't YET coordinated with the real court size */
+        /* This isn't coordinated with real court size */
         x = (int) ( screenX - 2 * ratioPXtoM );
         y = (int) ( screenY - 2 * ratioPXtoM );
 
-        // basketball diameter 24.1 cm or 0.241 meters
+        // basketball diameter 24.1 cm or 0.241 meters * 2 for better looks
         width = (short) (0.241 * 2 * ratioPXtoM);
         height = (short) (0.241 * 2 * ratioPXtoM);
 
 
         initialX = x + width /2f;
-        initialY = y + height /2f; // This works because the object:Ball is only initialized once.
+        initialY = y + height /2f; // This is needed because the object:Ball is only initialized once.
 
 
         // Draw the ball:
@@ -84,17 +69,16 @@ public class Ball
 
         // Physics-related stuff:
         GRAVITY = 9.8f * ratioPXtoM;
-        MAX_VELOCITY = 12 * ratioPXtoM; // also max pull | meters per second.
+        MAX_VELOCITY = 14 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
-
-        didCollideWithFloor = false;
-        haveBeenTrue = false;
+        didCollide = false;
 
         dotArrayListX = new ArrayList<>();
         dotArrayListY = new ArrayList<>();
 
     }
+
 
     void setActionDown (boolean ActionDown) {this.isTouch = ActionDown;}
     boolean getActionDown() {return isTouch;}
@@ -114,32 +98,23 @@ public class Ball
         this.y = y - height /2f;
     }
 
+    float ballAngle()
+    {return angle = (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));}
 
-    float findAngleWhenOutside(float Tx, float Ty) // T - Touch point || * returns a radian
+
+    float findAngleWhenOutside(float Tx, float Ty) // Find Angle When Finger Is Touching Outside, T - Touch point || * returns a radian
     {return (float) (Math.atan2(initialY - Ty, initialX - Tx ));} // discussion: "degrees vs radians"
 
 
-    float ballAngle() // 'findAngleWhenOutside()' isn't enough because it only updates when touch is outside max dist.
-    {return (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));}
-
-
-    float ballAngleCollision() // 'findAngleWhenOutside()' isn't enough because it only updates when touch is outside max dist.
-    {
-/*        if (didCollide())
-            return 180 - ballAngle();*/
-        return (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));
-    }
-
-
     float calcDistanceFromI(float x, float y) // To know whether or not the ball is at max distance from i.
-    {return (float) Math.sqrt((initialX - x) * (initialX - x) + (initialY -y) * (initialY -y));}
+    {return (float) Math.sqrt((initialX - x) * (initialX - x) + (initialY - y) * (initialY -y));}
 
 
     public void reset () // Experimental
     {
         thrown = false; // also resets time in: GameView.java -> sleep() -> if (ball.thrown) !|-> else {ball.time = 0;}
-        didCollideWithFloor = false;
-        haveBeenTrue = false;
+        didCollide = false;
+//        haveBeenTrue = false;
 
         x = initialX - width / 2f;
         y = initialY - height / 2f;
@@ -147,24 +122,6 @@ public class Ball
         dotArrayListX.clear();
         dotArrayListY.clear(); // otherwise the dots would stay permanently.
     }
-
-
-
-    public boolean didCollideWithFloor ()
-    {
-        if (y + height >= screenY - (ratioPXtoM * 0.4))
-        {
-            if ( ! haveBeenTrue)
-                didCollideWithFloor = true;
-            else
-                haveBeenTrue = true;
-        }
-
-        return !haveBeenTrue && didCollideWithFloor;
-    }
-    // Makes sure that it flips once.
-    // I need this because the ball will move up after hit - and because this method is called every run, I need to check like this.
-
 }
 
 
