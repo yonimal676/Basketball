@@ -476,6 +476,9 @@ public class GameView extends SurfaceView implements Runnable
 
                     else {
 
+                        ball.thrown = true;
+
+
                         percentOfPull = ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) / maxBallPull;
 
                         ball.velocity = percentOfPull * ball.MAX_VELOCITY;
@@ -486,8 +489,8 @@ public class GameView extends SurfaceView implements Runnable
                         // Both of these values never change after the ball is thrown.
 
 
+                        ball.range = (float) ((ball.velocity * ball.velocity * Math.sin(2 * ball.angle) * Math.sin(2 * ball.angle)) / ball.GRAVITY / ball.ratioPXtoM);
 
-                        ball.thrown = true;
 
                     }
 
