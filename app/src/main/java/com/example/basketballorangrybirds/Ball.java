@@ -12,6 +12,7 @@ import java.util.ArrayList;
 public class Ball
 {
     float x, y;
+    float colX, colY; // collision x, y coordinates.
     short width, height;  //short is like int
     boolean isTouch = false;     // true => touchDown (on the screen).
     Bitmap ballBitmap;
@@ -33,7 +34,8 @@ public class Ball
     float GRAVITY;
     final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
-    boolean didCollide;
+    byte collision; // 0 = no collision, 1 = right wall, 2 = left wall, 3 = ground.
+    // discussion: Changing Direction #34 -> number 1.
 
     ArrayList<Float> dotArrayListX;
     ArrayList<Float> dotArrayListY;
@@ -49,8 +51,8 @@ public class Ball
         ratioPXtoM = screenX / 14;
 
         /* This isn't coordinated with real court size */
-        x = (int) ( screenX - 2 * ratioPXtoM );
-        y = (int) ( screenY - 2 * ratioPXtoM );
+        x = (int) ( screenX - 2 * ratioPXtoM ); // two meters to the left of the edge.
+        y = (int) ( screenY - 2 * ratioPXtoM ); // two meters up from the bottom.
 
         // basketball diameter 24.1 cm or 0.241 meters * 2 for better looks
         width = (short) (0.241 * 2 * ratioPXtoM);
@@ -72,7 +74,7 @@ public class Ball
         MAX_VELOCITY = 14 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
-        didCollide = false;
+        collision = 0; // = no collision.
 
         dotArrayListX = new ArrayList<>();
         dotArrayListY = new ArrayList<>();
@@ -113,7 +115,7 @@ public class Ball
     public void reset () // Experimental
     {
         thrown = false; // also resets time in: GameView.java -> sleep() -> if (ball.thrown) !|-> else {ball.time = 0;}
-        didCollide = false;
+        collision = 0; // = no collision.
 //        haveBeenTrue = false;
 
         x = initialX - width / 2f;
@@ -122,6 +124,35 @@ public class Ball
         dotArrayListX.clear();
         dotArrayListY.clear(); // otherwise the dots would stay permanently.
     }
+
+
+
+
+    public byte didCollide(int groundHeight)
+    {
+        /* expect only one hit to work cuz only one colX/Y are recorded. */
+
+        if (x + width >= screenX)  // ball touches the right of the screen.
+        {
+            colX = x;   colY = y;
+            return collision = 1;
+        }
+
+        if (y + height >= screenY - groundHeight) { // ball touches ground.
+            colX = x;   colY = y;
+            return collision = 3;
+        }
+
+        if (x <= 0) { // ball touches the left of the screen.
+            colX = x;   colY = y;
+            return collision = 2;
+        }
+
+        return collision = 0; // no collision.
+    }
+
+
+
 }
 
 

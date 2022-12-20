@@ -212,11 +212,12 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-            if (ball.thrown && ball.time >= 0.016) // otherwise the app collapses when we reset the ball.
+            if (ball.thrown && ball.time >= 0.032) // otherwise the app collapses when we reset the ball.
                 for (int i = 0; i < ball.dotArrayListX.size() - (ball.MAX_VELOCITY / ball.velocity)  - 1; i++)
                     screenCanvas.drawPoint(ball.dotArrayListX.get(i) , ball.dotArrayListY.get(i) , paint1);
             // discussion: The Dots look disgusting #28
 
+            //TODO: BUGGY AS SHIT
 
 
 
@@ -250,6 +251,9 @@ public class GameView extends SurfaceView implements Runnable
                 screenCanvas.drawText("time: "+ ball.time,75,275, paint2);
                 screenCanvas.drawText("Time: "+ game_time,screenX - 175,125, paint2);
                 screenCanvas.drawText("range: "+ ball.range,75,300, paint2);
+
+                screenCanvas.drawText("collided: "+ ball.didCollide(ground.height),screenX / 2f - ball.width * 3, ball.height * 4, paint2);
+
             }
 
             screenCanvas.drawBitmap(showAxis, screenX / 2f - ball.width * 3, 0, paint1);//button to show initial axis
