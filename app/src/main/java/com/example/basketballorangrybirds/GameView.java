@@ -253,6 +253,11 @@ public class GameView extends SurfaceView implements Runnable
                 screenCanvas.drawText("range: "+ ball.range,75,300, paint2);
 
                 screenCanvas.drawText("collided: "+ ball.didCollide(ground.height),screenX / 2f - ball.width * 3, ball.height * 4, paint2);
+                screenCanvas.drawText("colX: "+ ball.colX,screenX / 2f - ball.width * 3, ball.height * 4.5f, paint2);
+                screenCanvas.drawText("colY: "+ ball.colY,screenX / 2f - ball.width * 3, ball.height * 5, paint2);
+                screenCanvas.drawText("colAngle: "+ ball.colAngle,screenX / 2f - ball.width * 3, ball.height * 5.5f, paint2);
+
+
 
             }
 
