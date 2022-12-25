@@ -12,10 +12,14 @@ import java.util.ArrayList;
 public class Ball
 {
     float x, y;
-    float colX, colY; // collision x, y coordinates.
     short width, height;  //short is like int
     boolean isTouch = false;     // true => touchDown (on the screen).
     Bitmap ballBitmap;
+
+    float prevX, prevY;
+    float colX, colY; // collision x, y coordinates.
+    float colToPrevOpp, colToPrevAdj;
+    float colAngle; // collision angle.
 
 
     float initialX, initialY;  // acts as the (0,0) point relative to the ball.
@@ -101,7 +105,11 @@ public class Ball
     }
 
     float ballAngle()
-    {return angle = (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));}
+    {
+        if (collision == 0)
+            return angle = (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));
+        return angle = (float) Math.toRadians(colAngle);
+    }
 
 
     float findAngleWhenOutside(float Tx, float Ty) // Find Angle When Finger Is Touching Outside, T - Touch point || * returns a radian
@@ -116,7 +124,11 @@ public class Ball
     {
         thrown = false; // also resets time in: GameView.java -> sleep() -> if (ball.thrown) !|-> else {ball.time = 0;}
         collision = 0; // = no collision.
-//        haveBeenTrue = false;
+        colX = 0;
+        colY = 0;
+        colToPrevOpp = 0;
+        colToPrevAdj = 0;
+        colAngle = 0;
 
         x = initialX - width / 2f;
         y = initialY - height / 2f;
@@ -128,30 +140,81 @@ public class Ball
 
 
 
-    public byte didCollide(int groundHeight)
+    public void didCollide(int groundHeight)
     {
         /* expect only one hit to work cuz only one colX/Y are recorded. */
 
         if (x + width >= screenX)  // ball touches the right of the screen.
         {
-            colX = x;   colY = y;
-            return collision = 1;
+            if (colX == 0 && colY == 0)
+            {
+                colX = x;
+                colY = y;
+            }
+
+            if (collision == 0)
+                collision = 1;
+            //else
+            /*if (colAngle == 0)
+                colAngle = (float) (90 - 180/Math.PI * angle);*/
         }
 
-        if (y + height >= screenY - groundHeight) { // ball touches ground.
-            colX = x;   colY = y;
-            return collision = 3;
+
+        else if (y + height >= screenY - groundHeight)  // ball touches ground.
+        {
+            if (colX == 0 && colY == 0)
+            {
+                colX = x;
+                colY = y;
+            }
+
+            if (collision == 0)
+                collision = 3;
+
+            /*if (colAngle == 0)
+                colAngle = (float) (90 - 180/Math.PI * angle);*/
         }
 
-        if (x <= 0) { // ball touches the left of the screen.
-            colX = x;   colY = y;
-            return collision = 2;
-        }
+        else if (x <= 0)  // ball touches the left of the screen.
+        {
 
-        return collision = 0; // no collision.
+            if (colX == 0 && colY == 0)
+            {
+                colX = x;
+                colY = y;
+            }
+
+            if (collision == 0)
+                collision = 2;
+
+           /* if (colAngle == 0)
+                colAngle = (float) (90 - 180/Math.PI * angle);*/
+        }
+        else
+            collision = 0; // no collision.
     }
 
 
+    public void calc_colAngle(byte whichCollision)
+    {
+        if (collision != 0) {
+            if (whichCollision == 2) {
+
+                velocityX = (float) (-1 * Math.abs(Math.abs(Math.cos(angle) * velocity))); // ✓
+                initialVelocityY = (float) Math.abs(Math.sin(angle) * velocity); // ✓
+
+
+                if (colToPrevAdj == 0)
+                    colToPrevAdj = prevX - colX;
+                if (colToPrevOpp == 0)
+                    colToPrevOpp = colY - prevY;
+
+                if (colAngle == 0) // only update once.
+                    colAngle = (float) (1 / Math.tan(colToPrevOpp / colToPrevAdj));
+            }
+
+        }
+    }
 
 }
 
