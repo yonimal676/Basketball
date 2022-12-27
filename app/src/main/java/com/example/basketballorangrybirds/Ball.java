@@ -18,7 +18,7 @@ public class Ball
 
     float prevX, prevY;
     float colX, colY; // collision x, y coordinates.
-    float colToPrevOpp, colToPrevAdj;
+    float colToPrevAdj, colToPrevOpp;
     float colAngle; // collision angle.
 
 
@@ -57,6 +57,9 @@ public class Ball
         /* This isn't coordinated with real court size */
         x = (int) ( screenX - 2 * ratioPXtoM ); // two meters to the left of the edge.
         y = (int) ( screenY - 2 * ratioPXtoM ); // two meters up from the bottom.
+
+        prevX = x;
+        prevY = y;
 
         // basketball diameter 24.1 cm or 0.241 meters * 2 for better looks
         width = (short) (0.241 * 2 * ratioPXtoM);
@@ -105,11 +108,7 @@ public class Ball
     }
 
     float ballAngle()
-    {
-        if (collision == 0)
-            return angle = (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));
-        return angle = (float) Math.toRadians(colAngle);
-    }
+    {return angle = (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));}
 
 
     float findAngleWhenOutside(float Tx, float Ty) // Find Angle When Finger Is Touching Outside, T - Touch point || * returns a radian
@@ -126,12 +125,17 @@ public class Ball
         collision = 0; // = no collision.
         colX = 0;
         colY = 0;
-        colToPrevOpp = 0;
+
         colToPrevAdj = 0;
+        colToPrevOpp = 0;
+
         colAngle = 0;
 
         x = initialX - width / 2f;
         y = initialY - height / 2f;
+
+        prevX = x;
+        prevY = y;
 
         dotArrayListX.clear();
         dotArrayListY.clear(); // otherwise the dots would stay permanently.
@@ -149,7 +153,7 @@ public class Ball
             if (colX == 0 && colY == 0)
             {
                 colX = x;
-                colY = y;
+                colY = y + height / 2f;
             }
 
             if (collision == 0)
@@ -165,7 +169,7 @@ public class Ball
             if (colX == 0 && colY == 0)
             {
                 colX = x;
-                colY = y;
+                colY = y + height / 2f;
             }
 
             if (collision == 0)
@@ -175,46 +179,43 @@ public class Ball
                 colAngle = (float) (90 - 180/Math.PI * angle);*/
         }
 
-        else if (x <= 0)  // ball touches the left of the screen.
+        else if (x <= screenX / 4f)  // ball touches the left of the screen.
         {
 
             if (colX == 0 && colY == 0)
             {
                 colX = x;
-                colY = y;
+                colY = y + height / 2f;
             }
 
             if (collision == 0)
                 collision = 2;
 
-           /* if (colAngle == 0)
-                colAngle = (float) (90 - 180/Math.PI * angle);*/
         }
+
         else
             collision = 0; // no collision.
     }
 
 
-    public void calc_colAngle(byte whichCollision)
+
+/*
+
+    public float calc_colAngle (byte whichCollision)
     {
-        if (collision != 0) {
-            if (whichCollision == 2) {
-
-                velocityX = (float) (-1 * Math.abs(Math.abs(Math.cos(angle) * velocity))); // ✓
-                initialVelocityY = (float) Math.abs(Math.sin(angle) * velocity); // ✓
+        if (whichCollision == 2)
+        {
 
 
-                if (colToPrevAdj == 0)
-                    colToPrevAdj = prevX - colX;
-                if (colToPrevOpp == 0)
-                    colToPrevOpp = colY - prevY;
 
-                if (colAngle == 0) // only update once.
-                    colAngle = (float) (1 / Math.tan(colToPrevOpp / colToPrevAdj));
-            }
+            if (colAngle == 0) // only update once;
+                return
 
-        }
+        return 0;
+
+//        colAngle = 0;
     }
+*/
 
 }
 
