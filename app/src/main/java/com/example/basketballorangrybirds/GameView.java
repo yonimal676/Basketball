@@ -18,6 +18,7 @@ public class GameView extends SurfaceView implements Runnable
     private final Paint paint3;            // ball hit-box.
     private final Paint paint4;            // axis in respect to the ball.
     private final Paint paint5;            // trajectory of the ball.
+    private final Paint paint6;            // hitting point.
 
 
     private final int maxBallPull;         // radius of the circle which determines max dist. ball from initial point
@@ -33,7 +34,6 @@ public class GameView extends SurfaceView implements Runnable
     // Objects
 
 
-    //    private final float ratioX , ratioY;
     private final int screenX, screenY;
     private final byte SLEEP_MILLIS = 16; // byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 fps)
     private float game_time;
@@ -42,7 +42,7 @@ public class GameView extends SurfaceView implements Runnable
     private Thread thread;
     private final GameActivity activity;
     private final Context gameActivityContext;
-    byte quarterOfLaunch;
+    private byte quarterOfLaunch;
 
     // Technical stuff
 
@@ -67,9 +67,7 @@ public class GameView extends SurfaceView implements Runnable
 
 
         background = new Background(getResources(), screenX, screenY);
-
         ball = new Ball(getResources(), screenX, screenY);
-
         ground = new Ground(getResources(), screenX, screenY);
 
 
@@ -95,29 +93,29 @@ public class GameView extends SurfaceView implements Runnable
         paint3 = new Paint();
         paint3.setColor(Color.RED);
         paint3.setStyle(Paint.Style.FILL);
-        paint3.setStrokeWidth(3f);
-        //ball hit-box
+        paint3.setStrokeWidth(2f);
 
 
         paint4 = new Paint();
         paint4.setColor(Color.WHITE);
         paint4.setStyle(Paint.Style.FILL);
         paint4.setStrokeWidth(3f);
-        //ball hit-box
 
         paint5 = new Paint();
         paint5.setColor(Color.BLUE);
         paint5.setStyle(Paint.Style.FILL);
         paint5.setStrokeWidth(4f);
-        //ball hit-box
+
+        paint6 = new Paint();
+        paint6.setColor(Color.RED);
+        paint6.setStyle(Paint.Style.FILL);
+        paint6.setStrokeWidth(6f);
 
 
         showAxis = BitmapFactory.decodeResource(getResources(), R.drawable.play_btn);
         showAxis = Bitmap.createScaledBitmap(showAxis, ball.width * 3, ball.height * 3, false);
 
-
         showAxisBool = 1;
-
 
         ball.thrown = false;
         percentOfPull = 0;
@@ -126,15 +124,14 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-
     @Override
     public void run()
     {
-        while (isPlaying)
-        { // run only if we play.
-            update();//The screen
-            draw();//The components
-            sleep();//To render motion
+        while (isPlaying) // run only if playing.
+        {
+            update();//The components.
+            draw();//Components on screen.
+            sleep();//To render motion (FPS).
         }
     }
 
@@ -160,20 +157,29 @@ public class GameView extends SurfaceView implements Runnable
 
             ball.didCollide(ground.height);
 
-/*            switch (ball.collision) // first check if collided.
+
+
+
+            switch (ball.collision) // first check if collided.
             {
-                case 2:
-                        physicsUpdate(*//*ball.colX, ball.colY,*//* ball.initialX, ball.initialY, ball.calc_colAngle((byte) 2 )); // <- calculate
+                case 0:
+                    physicsUpdate(ball.initialX, ball.initialY);
                     break;
 
+                case 2:
 
-                default:
-                    physicsUpdate(ball.initialX, ball.initialY, ball.ballAngle());
+                    ball.colToPrevAdj = ball.prevX - ball.x;
+                    ball.colToPrevOpp = ball.y - ball.prevY;
+//                    if (ball.colAngle == 0)
+                    ball.colAngle = (float)  ( Math.atan(ball.colToPrevOpp / ball.colToPrevAdj));
 
-            }*/
+
+                    physicsUpdate(ball.colX, ball.colY);
+                    break;
+
+            }
 
 
-            physicsUpdate(ball.initialX, ball.initialY, ball.ballAngle());
 
 
 
@@ -181,25 +187,22 @@ public class GameView extends SurfaceView implements Runnable
              what I said in discussion: Changing Direction #34 -> 3. 2nd attempt: */
 
 
-            ball.dotArrayListX.add(ball.x + fixX()); // → ↓
-            ball.dotArrayListY.add(ball.y + fixY()); // show path of the ball
+            ball.dotArrayListX.add(ball.prevX + fixX()); // → ↓
+            ball.dotArrayListY.add(ball.prevY + fixY()); // show path of the ball
 
         }// if (thrown)
     }
 
 // keep in mind: ball.ballAngle() -> ball.initialVelocityY -> ball.velocityY
 
-    public void physicsUpdate (float orgX, float orgY, float orgAngle) // origin of throw (for collision).
+    public void physicsUpdate (float orgX, float orgY) // origin of throw (for collision).
     {
 
-/*
-        if (ball.collision == 2) {
-            ball.initialVelocityY = (float) (Math.abs(Math.sin(orgAngle) * ball.velocity) * 0.8); // ✓
-            ball.velocityX = -1 * Math.abs(ball.velocityX);
-        }*/
-
-        ball.prevX = ball.x;
-        ball.prevY = ball.y; // discussion: Changing Direction #34
+        if (ball.time / ball.timeMultiplier > 0.032)
+        {
+            ball.prevX = ball.x;
+            ball.prevY = ball.y;
+        } // discussion: Changing Direction #34 || to prevent a bug (of dotArrayListX/Y) -> discussion: The Dots look disgusting #28
 
 
 
@@ -207,42 +210,67 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-        switch (ball.quarter) // discussion: From where has the ball been thrown? #24 || physics #17
+
+        if ( ball.collision == 0 ) {
+            switch (ball.quarter) // discussion: From where has the ball been thrown? #24 || physics #17
+            {
+                case 1:
+                    ball.GRAVITY = -1 * Math.abs(ball.GRAVITY); // because of: screen axis in comparison to initial ball place #12
+                    ball.x = orgX - ball.velocityX * ball.time - fixX();
+                    ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    break;
+
+                case 2:
+                    ball.GRAVITY = -1 * Math.abs(ball.GRAVITY); // because of: screen axis in comparison to initial ball place #12
+                    ball.x = orgX + ball.velocityX * ball.time - fixX();
+                    ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    break;
+
+                case 3:
+                    ball.GRAVITY = Math.abs(ball.GRAVITY);
+                    ball.x = orgX + ball.velocityX * ball.time - fixX();
+                    ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    break;
+
+                case 4:
+                    ball.GRAVITY = Math.abs(ball.GRAVITY);
+                    ball.x = orgX - ball.velocityX * ball.time - fixX(); // to the left
+                    ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+                    break;
+
+            }
+
+        }
+        else
         {
-            case 1:
-                ball.GRAVITY = -1 * Math.abs(ball.GRAVITY); // because of: screen axis in comparison to initial ball place #12
-                ball.x = orgX - ball.velocityX * ball.time - fixX();
-                ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
-                break;
+            switch (ball.collision)
+            {
+                case 2:
 
-            case 2:
-                ball.GRAVITY = -1 * Math.abs(ball.GRAVITY); // because of: screen axis in comparison to initial ball place #12
-                ball.x = orgX + ball.velocityX * ball.time - fixX();
-                ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
-                break;
+//                    ball.initialVelocityY = (float) (Math.abs(Math.sin(orgAngle) * ball.velocity) * percentOfPull); // ✓
 
-            case 3:
-                ball.GRAVITY = Math.abs(ball.GRAVITY);
-                ball.x = orgX + ball.velocityX * ball.time - fixX();
-                ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
-                break;
+//                    ball.velocityX = (float) Math.abs(Math.cos(ball.colAngle) * ball.velocity); // ✓
+//                    ball.initialVelocityY = (float) Math.abs(Math.sin(ball.colAngle) * ball.velocity); // ✓
 
-            case 4:
-                ball.GRAVITY = Math.abs(ball.GRAVITY);
-                ball.x = orgX - ball.velocityX * ball.time - fixX(); // to the left
-                ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
-                break;
+/*
+                    if (ball.howManyCols != 0)
+                        ball.timeMultiplier /= 15;
+*/
+
+
+                    ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
+                    ball.x = ball.colX /*- (ball.initialX - ball.colX)*/ + ball.velocityX * ball.time - fixX();
+                    ball.y = (float) (ball.colY/* + (ball.initialY - ball.colY)*/ + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+
+                    break;
+
+            }
+
+
+
 
         }
 
-
-//        if (colToPrevAdj == 0)
-        ball.colToPrevAdj = Math.abs(ball.prevX - ball.x);
-//        if (colToPrevOpp == 0)
-        ball.colToPrevOpp = Math.abs(ball.y - ball.prevY);
-
-        if (ball.collision == 2 && ball.colAngle == 0)
-            ball.colAngle = (float) (180/Math.PI * Math.atan(ball.colToPrevOpp / ball.colToPrevAdj));
 
     }
 
@@ -264,13 +292,12 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-            if (ball.thrown && ball.time >= 0.032) // otherwise the app collapses when we reset the ball.
-                for (int i = 0; i < ball.dotArrayListX.size() - (ball.MAX_VELOCITY / ball.velocity)  - 1; i++)
+            if (ball.thrown)
+                for (int i = 0; i < ball.dotArrayListX.size() - 1; i++)
                     screenCanvas.drawPoint(ball.dotArrayListX.get(i) , ball.dotArrayListY.get(i) , paint1);
             // discussion: The Dots look disgusting #28
 
-            //TODO: BUGGY AS SHIT
-
+            //TODO: BUGGY AS SHIT prev:    for (int i = 0; i < ball.dotArrayListX.size() /*- (ball.MAX_VELOCITY / ball.velocity) */ - 1; i++)
 
 
 
@@ -278,6 +305,10 @@ public class GameView extends SurfaceView implements Runnable
 
             screenCanvas.drawLine(screenX / 4f, 0, screenX / 4f, screenY, paint5);
 
+            if (ball.collision != 0) {
+                screenCanvas.drawPoint(screenX / 4f, ball.colY, paint6);
+                screenCanvas.drawLine(ball.colX, ball.colY, ball.x + fixX(), ball.y + fixY(), paint5);
+            }
 
 
             if (showAxisBool == 1)
@@ -310,14 +341,14 @@ public class GameView extends SurfaceView implements Runnable
                 screenCanvas.drawText("velocityX: "+ ball.velocityX,75,200, paint2);
                 screenCanvas.drawText("velocityY: "+ ball.velocityY,75,225, paint2);
                 screenCanvas.drawText("HEIGHT: "+ ball.HEIGHT,75,250, paint2);
-                screenCanvas.drawText("time: "+ ball.time,75,275, paint2);
+                screenCanvas.drawText("quarter: "+ ball.quarter,75, 274, paint2);
                 screenCanvas.drawText("Time: "+ (int) game_time,screenX - 175,125, paint2);
                 screenCanvas.drawText("range: "+ ball.range,75,300, paint2);
+
 
                 screenCanvas.drawText("collided: "+ ball.collision,screenX / 2f - ball.width * 3, ball.height * 4, paint2);
                 screenCanvas.drawText("colX: "+ ball.colX,screenX / 2f - ball.width * 3, ball.height * 4.5f, paint2);
                 screenCanvas.drawText("colY: "+ ball.colY,screenX / 2f - ball.width * 3, ball.height * 5, paint2);
-                screenCanvas.drawText("colAngle: "+  180/Math.PI * ball.colAngle,screenX / 2f - ball.width * 3, ball.height * 5.5f, paint2);
 
                 screenCanvas.drawText("colAngle!!!!: "+ ball.colAngle,screenX / 2f - ball.width * 3, screenY / 2f, paint2);
 
@@ -329,7 +360,6 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-//                Log.d("letssee", ball.didCollide(ground.height))
 
 
             }
@@ -408,14 +438,14 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-    private void sleep() // the problem is in the x/y -> colx/y
+    private void sleep() // discussion: Time updating #33
     {
         try { Thread.sleep(SLEEP_MILLIS); }// = 16
         catch (InterruptedException e) {e.printStackTrace();}
 
         //count time from throw:
         if (ball.thrown)
-            ball.time += 0.016f /** 2.5*/ * 1.8;
+            ball.time += 0.016f * ball.timeMultiplier;
         else
             ball.time = 0;
 

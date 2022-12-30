@@ -30,6 +30,7 @@ public class Ball
 
     float velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
     float time;
+    float timeMultiplier; // discussion: Time updating #33
     float range; // of projectile.
     float HEIGHT;
     boolean thrown;
@@ -39,6 +40,7 @@ public class Ball
     final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
     byte collision; // 0 = no collision, 1 = right wall, 2 = left wall, 3 = ground.
+    byte howManyCols;
     // discussion: Changing Direction #34 -> number 1.
 
     ArrayList<Float> dotArrayListX;
@@ -80,6 +82,8 @@ public class Ball
         GRAVITY = 9.8f * ratioPXtoM;
         MAX_VELOCITY = 14 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
+        timeMultiplier = 2.5f;
+        howManyCols = 0;
 
         collision = 0; // = no collision.
 
@@ -130,6 +134,8 @@ public class Ball
         colToPrevOpp = 0;
 
         colAngle = 0;
+        howManyCols = 0;
+
 
         x = initialX - width / 2f;
         y = initialY - height / 2f;
@@ -150,7 +156,9 @@ public class Ball
 
         if (x + width >= screenX)  // ball touches the right of the screen.
         {
-            if (colX == 0 && colY == 0)
+            howManyCols++;
+
+            if (colX == 0 || colY == 0)
             {
                 colX = x;
                 colY = y + height / 2f;
@@ -158,15 +166,14 @@ public class Ball
 
             if (collision == 0)
                 collision = 1;
-            //else
-            /*if (colAngle == 0)
-                colAngle = (float) (90 - 180/Math.PI * angle);*/
         }
 
 
         else if (y + height >= screenY - groundHeight)  // ball touches ground.
         {
-            if (colX == 0 && colY == 0)
+            howManyCols++;
+
+            if (colX == 0 || colY == 0)
             {
                 colX = x;
                 colY = y + height / 2f;
@@ -174,48 +181,29 @@ public class Ball
 
             if (collision == 0)
                 collision = 3;
-
-            /*if (colAngle == 0)
-                colAngle = (float) (90 - 180/Math.PI * angle);*/
         }
 
-        else if (x <= screenX / 4f)  // ball touches the left of the screen.
+        else if (x - (prevX - x) <= screenX / 4f)  // ball touches the left of the screen.
         {
+            howManyCols++;
 
-            if (colX == 0 && colY == 0)
+            if (collision == 0)
             {
+                collision = 2;
                 colX = x;
                 colY = y + height / 2f;
             }
 
-            if (collision == 0)
-                collision = 2;
 
         }
 
-        else
+
+        else if (howManyCols == 0)
             collision = 0; // no collision.
     }
 
 
 
-/*
-
-    public float calc_colAngle (byte whichCollision)
-    {
-        if (whichCollision == 2)
-        {
-
-
-
-            if (colAngle == 0) // only update once;
-                return
-
-        return 0;
-
-//        colAngle = 0;
-    }
-*/
 
 }
 
