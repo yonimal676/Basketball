@@ -3,7 +3,6 @@ package com.example.basketballorangrybirds;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
 
 import java.util.ArrayList;
 //short min value is -32,768 and max value is 32,767 (inclusive).
@@ -13,7 +12,7 @@ public class Ball
 {
     float x, y;
     short width, height;  //short is like int
-    boolean isTouch = false;     // true => touchDown (on the screen).
+    boolean isTouched = false;     // true => touchDown (on the screen).
     Bitmap ballBitmap;
 
     float prevX, prevY;
@@ -57,8 +56,8 @@ public class Ball
         ratioPXtoM = screenX / 14;
 
         /* This isn't coordinated with real court size */
-        x = (int) ( screenX - 2 * ratioPXtoM ); // two meters to the left of the edge.
-        y = (int) ( screenY - 2 * ratioPXtoM ); // two meters up from the bottom.
+        x = (int) ( screenX/2 /*- 2 * ratioPXtoM*/ ); // two meters to the left of the edge.
+        y = (int) ( screenY/2 /*- 2 * ratioPXtoM */); // two meters up from the bottom.
 
         prevX = x;
         prevY = y;
@@ -93,26 +92,19 @@ public class Ball
     }
 
 
-    void setActionDown (boolean ActionDown) {this.isTouch = ActionDown;}
-    boolean getActionDown() {return isTouch;}
-
-
-    Rect getRect () {return new Rect((int) x,(int) y, (int) (x + width), (int) (y + height ));}
-
-
     boolean isTouching (float x, float y) // Did touch in bounds?
     {return ((x >= this.x) && (x <= this.x + width) && y >= this.y) && (y <= this.y + height);}
 
 
 
-    void setPosition (float x, float y)
-    {
+    void setPosition (float x, float y) {
         this.x = x - width /2f; // '- width /2f' is for going from current position to touch position smoothly
         this.y = y - height /2f;
     }
 
-    float ballAngle()
-    {return angle = (float) (Math.atan2(initialY - (y + height/2f), initialX - (x + width/2f)));}
+
+    float ballAngle() // from initial position.
+    {return angle = (float) (Math.atan2(initialY - (y + height / 2f), initialX - (x + width / 2f)));}
 
 
     float findAngleWhenOutside(float Tx, float Ty) // Find Angle When Finger Is Touching Outside, T - Touch point || * returns a radian
@@ -123,7 +115,8 @@ public class Ball
     {return (float) Math.sqrt((initialX - x) * (initialX - x) + (initialY - y) * (initialY -y));}
 
 
-    public void reset () // Experimental
+
+    public void reset () // for dev (me haha... ಥ_ಥ )
     {
         thrown = false; // also resets time in: GameView.java -> sleep() -> if (ball.thrown) !|-> else {ball.time = 0;}
         collision = 0; // = no collision.
@@ -143,8 +136,10 @@ public class Ball
         prevX = x;
         prevY = y;
 
+        angle = 0;
+
         dotArrayListX.clear();
-        dotArrayListY.clear(); // otherwise the dots would stay permanently.
+        dotArrayListY.clear(); // erase dots.
     }
 
 
@@ -152,20 +147,19 @@ public class Ball
 
     public void didCollide(int groundHeight)
     {
-        /* expect only one hit to work cuz only one colX/Y are recorded. */
+        // TODO : expect only one hit to work cuz only one colX/Y are recorded.
 
         if (x + width >= screenX)  // ball touches the right of the screen.
         {
             howManyCols++;
 
-            if (colX == 0 || colY == 0)
+            if (collision == 0)
             {
+                collision = 1;
+
                 colX = x;
                 colY = y + height / 2f;
             }
-
-            if (collision == 0)
-                collision = 1;
         }
 
 
@@ -173,14 +167,14 @@ public class Ball
         {
             howManyCols++;
 
-            if (colX == 0 || colY == 0)
+            if (collision == 0)
             {
+                collision = 3;
+
                 colX = x;
                 colY = y + height / 2f;
             }
 
-            if (collision == 0)
-                collision = 3;
         }
 
         else if (x - (prevX - x) <= screenX / 4f)  // ball touches the left of the screen.
@@ -190,11 +184,10 @@ public class Ball
             if (collision == 0)
             {
                 collision = 2;
+
                 colX = x;
                 colY = y + height / 2f;
             }
-
-
         }
 
 

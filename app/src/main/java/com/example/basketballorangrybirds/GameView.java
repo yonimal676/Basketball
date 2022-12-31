@@ -141,45 +141,26 @@ public class GameView extends SurfaceView implements Runnable
     {//discussion (bug fix): physics don't work when angle is -90 or 90 #29
 
 
-        if ( ! ball.thrown && ball.getActionDown()) // get quarter right before the ball is thrown.
+        if ( ! ball.thrown && ball.isTouched) // get quarter right before the ball is thrown.
             quarterOfLaunch = ball.quarter; // discussion: From where has the ball been thrown? #24
 
 
         if (ball.thrown)
         {
-
-
             if (ball.y > screenY) // make the height logical and not technical.
                 ball.HEIGHT =  -1 * Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
             else
                 ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
 
 
+
             ball.didCollide(ground.height);
 
 
 
+            physicsUpdate(ball.initialX, ball.initialY);
 
-            switch (ball.collision) // first check if collided.
-            {
-                case 0:
-                    physicsUpdate(ball.initialX, ball.initialY);
-                    break;
-
-                case 2:
-
-                    ball.colToPrevAdj = ball.prevX - ball.x;
-                    ball.colToPrevOpp = ball.y - ball.prevY;
-//                    if (ball.colAngle == 0)
-                    ball.colAngle = (float)  ( Math.atan(ball.colToPrevOpp / ball.colToPrevAdj));
-
-
-                    physicsUpdate(ball.colX, ball.colY);
-                    break;
-
-            }
-
-
+        }
 
 
 
@@ -187,13 +168,13 @@ public class GameView extends SurfaceView implements Runnable
              what I said in discussion: Changing Direction #34 -> 3. 2nd attempt: */
 
 
-            ball.dotArrayListX.add(ball.prevX + fixX()); // → ↓
-            ball.dotArrayListY.add(ball.prevY + fixY()); // show path of the ball
+        ball.dotArrayListX.add(ball.prevX + fixX()); // → ↓
+        ball.dotArrayListY.add(ball.prevY + fixY()); // show path of the ball
 
-        }// if (thrown)
-    }
+    }// if (thrown)
 
-// keep in mind: ball.ballAngle() -> ball.initialVelocityY -> ball.velocityY
+
+
 
     public void physicsUpdate (float orgX, float orgY) // origin of throw (for collision).
     {
@@ -211,7 +192,8 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-        if ( ball.collision == 0 ) {
+        if ( ball.collision == 0 )
+        {
             switch (ball.quarter) // discussion: From where has the ball been thrown? #24 || physics #17
             {
                 case 1:
@@ -241,26 +223,34 @@ public class GameView extends SurfaceView implements Runnable
             }
 
         }
+
+
         else
         {
             switch (ball.collision)
             {
                 case 2:
+//                    ball.GRAVITY = Math.abs(ball.GRAVITY);
+
 
 //                    ball.initialVelocityY = (float) (Math.abs(Math.sin(orgAngle) * ball.velocity) * percentOfPull); // ✓
 
 //                    ball.velocityX = (float) Math.abs(Math.cos(ball.colAngle) * ball.velocity); // ✓
 //                    ball.initialVelocityY = (float) Math.abs(Math.sin(ball.colAngle) * ball.velocity); // ✓
 
-/*
-                    if (ball.howManyCols != 0)
-                        ball.timeMultiplier /= 15;
-*/
 
 
-                    ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
-                    ball.x = ball.colX /*- (ball.initialX - ball.colX)*/ + ball.velocityX * ball.time - fixX();
-                    ball.y = (float) (ball.colY/* + (ball.initialY - ball.colY)*/ + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
+
+                    ball.colToPrevAdj = Math.abs(ball.prevX - ball.x);
+                    ball.colToPrevOpp = Math.abs(ball.y - ball.prevY);
+//                    if (ball.colAngle == 0)
+                    ball.colAngle = (float)  ( Math.atan(ball.colToPrevOpp / ball.colToPrevAdj));
+
+
+                    ball.velocityX = -1 * Math.abs(ball.velocityX);
+
+                    ball.x = ball.colX - ball.velocityX * ball.time - fixX();
+                    ball.y = (float) (ball.colY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) - fixY();
 
                     break;
 
@@ -276,95 +266,31 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-    public void draw () {
+    public void draw ()
+    {
         if (getHolder().getSurface().isValid()) // is the surface valid?
         {
             Canvas screenCanvas = getHolder().lockCanvas(); // create the canvas
 
-
+            // KEEP IN MIND THAT THE ORDER MATTERS. ↓
 
             screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint1);//background
-
-            screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);//ball
-
             screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
 
 
-
+            screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);//ball
 
             if (ball.thrown)
                 for (int i = 0; i < ball.dotArrayListX.size() - 1; i++)
-                    screenCanvas.drawPoint(ball.dotArrayListX.get(i) , ball.dotArrayListY.get(i) , paint1);
+                    try{screenCanvas.drawPoint(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), paint1);}
+                    catch (Exception ignored) {}
+
             // discussion: The Dots look disgusting #28
-
-            //TODO: BUGGY AS SHIT prev:    for (int i = 0; i < ball.dotArrayListX.size() /*- (ball.MAX_VELOCITY / ball.velocity) */ - 1; i++)
-
-
-
-            screenCanvas.drawLine(ball.prevX, ball.prevY + fixY(), ball.x, ball.y + fixY(), paint5);
-
-            screenCanvas.drawLine(screenX / 4f, 0, screenX / 4f, screenY, paint5);
-
-            if (ball.collision != 0) {
-                screenCanvas.drawPoint(screenX / 4f, ball.colY, paint6);
-                screenCanvas.drawLine(ball.colX, ball.colY, ball.x + fixX(), ball.y + fixY(), paint5);
-            }
-
-
-            if (showAxisBool == 1)
-            {
-//              SHOW AXIS:
-                screenCanvas.drawLine(0, ball.initialY, screenX, ball.initialY, paint2);
-                screenCanvas.drawLine(ball.initialX, 0, ball.initialX, screenY, paint2);
-
-//              SHOW BALL AXIS:
-                screenCanvas.drawLine(0, ball.y + fixY(), screenX, ball.y + fixY(), paint4);
-                screenCanvas.drawLine(ball.x + fixX(), 0, ball.x + fixX(), screenY, paint4);
-
-//              SHOW BALL HITBOX
-                screenCanvas.drawLine(ball.x, ball.y, ball.x + ball.width, ball.y, paint3);
-                screenCanvas.drawLine(ball.x, ball.y, ball.x, ball.y + ball.height, paint3);
-                screenCanvas.drawLine(ball.x + ball.width, ball.y, ball.x + ball.width, ball.y + ball.height, paint3);
-                screenCanvas.drawLine(ball.x, ball.y + ball.height, ball.x + ball.width, ball.y + ball.height, paint3);
-
-
-                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //TODO: the try-catch block is temporary, remove after game is complete.
 
 
 
-
-
-                screenCanvas.drawText("X: "+ ball.x + fixX(),75,50, paint2);
-                screenCanvas.drawText("Y: "+ ball.y + fixY(),75,75, paint2);
-                screenCanvas.drawText("Angle: "+ (float) (180 / Math.PI * ball.angle),75,125, paint2);
-                screenCanvas.drawText("velocity: "+ ball.velocity,75,175, paint2);
-                screenCanvas.drawText("velocityX: "+ ball.velocityX,75,200, paint2);
-                screenCanvas.drawText("velocityY: "+ ball.velocityY,75,225, paint2);
-                screenCanvas.drawText("HEIGHT: "+ ball.HEIGHT,75,250, paint2);
-                screenCanvas.drawText("quarter: "+ ball.quarter,75, 274, paint2);
-                screenCanvas.drawText("Time: "+ (int) game_time,screenX - 175,125, paint2);
-                screenCanvas.drawText("range: "+ ball.range,75,300, paint2);
-
-
-                screenCanvas.drawText("collided: "+ ball.collision,screenX / 2f - ball.width * 3, ball.height * 4, paint2);
-                screenCanvas.drawText("colX: "+ ball.colX,screenX / 2f - ball.width * 3, ball.height * 4.5f, paint2);
-                screenCanvas.drawText("colY: "+ ball.colY,screenX / 2f - ball.width * 3, ball.height * 5, paint2);
-
-                screenCanvas.drawText("colAngle!!!!: "+ ball.colAngle,screenX / 2f - ball.width * 3, screenY / 2f, paint2);
-
-                screenCanvas.drawText("colToPrevOpp: "+ ball.colToPrevOpp,screenX / 2f - ball.width * 3, screenY / 2f-25, paint2);
-                screenCanvas.drawText("colToPrevAdj: "+ ball.colToPrevAdj,screenX / 2f - ball.width * 3, screenY / 2f-50, paint2);
-
-
-
-
-
-
-
-
-            }
-
-            screenCanvas.drawBitmap(showAxis, screenX / 2f - ball.width * 3, 0, paint1);//button to show initial axis
+            showStats(screenCanvas);
 
 
 
@@ -377,8 +303,9 @@ public class GameView extends SurfaceView implements Runnable
 
 
                 //discussion: X and Y of stop screenCanvas.DrawLine #15
-                if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width / 2f) {
-                    // line should only be drawn when the ball is farther from the center
+                if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) > ball.width / 2f)
+                {
+                    // line is only drawn when the ball is farther from the center
                     // than the radius of the ball, otherwise it will be drawn inside the ball itself.
 
                     float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.width / 2f)); // similar to perpAdj
@@ -389,48 +316,28 @@ public class GameView extends SurfaceView implements Runnable
                     switch (ball.quarter) // draw a line to the opposite corner
                     {
                         case 1:
-                            screenCanvas.drawLine(
-                                    ball.x + fixX() - lineStopX,
-                                    ball.y + fixY() + lineStopY,
+                            screenCanvas.drawLine(ball.x + fixX() - lineStopX, ball.y + fixY() + lineStopY,
                                     ball.initialX - (ball.x - ball.initialX) - fixX(),
-                                    ball.initialY + (ball.initialY - ball.y) - fixY(),
-                                    paint1);
+                                    ball.initialY + (ball.initialY - ball.y) - fixY(), paint1);
                             break;
-
                         case 2:
-                            screenCanvas.drawLine(
-                                    ball.x + fixX() + lineStopX,
-                                    ball.y + fixY() + lineStopY,
+                            screenCanvas.drawLine(ball.x + fixX() + lineStopX, ball.y + fixY() + lineStopY,
                                     ball.initialX + (ball.initialX - ball.x) - fixX(),
-                                    ball.initialY + (ball.initialY - ball.y) - fixY(),
-                                    paint1);
+                                    ball.initialY + (ball.initialY - ball.y) - fixY(), paint1);
                             break;
-
                         case 3:
-                            screenCanvas.drawLine(
-                                    ball.x + fixX() + lineStopX,
-                                    ball.y + fixY() - lineStopY,
+                            screenCanvas.drawLine(ball.x + fixX() + lineStopX, ball.y + fixY() - lineStopY,
                                     ball.initialX + (ball.initialX - ball.x) - fixX(),
-                                    ball.initialY - (ball.y - ball.initialY) - fixY(),
-                                    paint1);
+                                    ball.initialY - (ball.y - ball.initialY) - fixY(), paint1);
                             break;
-
                         case 4:
-                            screenCanvas.drawLine(
-                                    ball.x + fixX() - lineStopX,
-                                    ball.y + fixY() - lineStopY,
+                            screenCanvas.drawLine(ball.x + fixX() - lineStopX, ball.y + fixY() - lineStopY,
                                     ball.initialX - (ball.x - ball.initialX) - fixX(),
-                                    ball.initialY - (ball.y - ball.initialY) - fixY(),
-                                    paint1);
+                                    ball.initialY - (ball.y - ball.initialY) - fixY(), paint1);
                             break;
                     }
-
-
-
-
                 }
             }
-
             getHolder().unlockCanvasAndPost(screenCanvas);
         }
     }
@@ -468,19 +375,8 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-
-    public void setBallQuarter(byte qtr)
-    {ball.quarter = qtr;}
-
-
-    public float fixX()
-    {return ball.width/2f;}
-
-
-    public float fixY()
-    {return ball.height/2f;}
-
-
+    public float fixX() {return ball.width/2f;}// for comfortable coding.
+    public float fixY() {return ball.height/2f;}// for comfortable coding.
 
 
 
@@ -493,13 +389,11 @@ public class GameView extends SurfaceView implements Runnable
             case MotionEvent.ACTION_DOWN:// started touch
 
                 if (ball.isTouching(event.getX(),event.getY()) && ! ball.thrown)
-                    ball.setActionDown(true); // 'ball' has a boolean method that indicates whether the object is touched.
+                    ball.isTouched= true; // 'ball' has a boolean method that indicates whether the object is touched.
 
 
-
-                if (ball.calcDistanceFromI(ball.x, ball.y) > maxBallPull)
-                    if (ball.calcDistanceFromI(event.getX(), event.getY()) <= maxBallPull)
-                        ball.reset();
+                if (ball.thrown && ball.calcDistanceFromI(event.getX(), event.getY()) <= maxBallPull)
+                    ball.reset(); // reset when touch origin.
 
 
                 if (event.getRawX() >= screenX /2f - ball.width * 3 && event.getRawX() <= screenX /2f + ball.width * 3
@@ -509,71 +403,59 @@ public class GameView extends SurfaceView implements Runnable
                         showAxisBool = 1;
                     else
                         showAxisBool = 0;
-                }
+                }// turn on or off the dev mode.
 
                 break;
 
 
 
+
             case MotionEvent.ACTION_MOVE: // pressed and moving
             {
-                if (ball.getActionDown()) // if touched the ball
+                if (ball.isTouched) // if touched the ball
                 {
 
                     float angle_of_touch = ball.findAngleWhenOutside(event.getX(), event.getY()); // also sets ball.angle
 
 
-                    if (Math.abs(180 / Math.PI * angle_of_touch) > 90)
-                    {
+                    if (Math.abs(180 / Math.PI * angle_of_touch) > 90) // right side
                         if (180 / Math.PI * angle_of_touch >= 0)
-                            setBallQuarter((byte) 1); // top right corner
+                            ball.quarter = 1; // top right corner
                         else
-                            setBallQuarter((byte) 4); // bottom right corner
-                    }
-                    else
-                    {
+                            ball.quarter = 4; // bottom right corner
+
+                    else // left side
                         if (180 / Math.PI * angle_of_touch >= 0)
-                            setBallQuarter((byte) 2); // top left corner
+                            ball.quarter = 2; // top left corner
                         else
-                            setBallQuarter((byte) 3); // bottom left corner
-                    }
+                            ball.quarter = 3; // bottom left corner
 
 
 
 
 
-
-
-                    if (ball.calcDistanceFromI(event.getX(), event.getY()) < maxBallPull) // in drag-able circle
-                        ball.setPosition(event.getX(), event.getY());
+                    if (ball.calcDistanceFromI(event.getX(), event.getY()) < maxBallPull) // if in drag-able circle
+                        ball.setPosition(event.getX(), event.getY());                     // than drag normally.
 
 
 
                     else // issue: finger drag outside of radius #4
                     {
-
                         perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * maxBallPull); // for y
                         perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * maxBallPull); // for x
                         //  perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
 
 
-
                         switch (ball.quarter)
                         {
                             case 1: ball.setPosition(ball.initialX + perpAdj, ball.initialY - perpOpp); break;
-
                             case 2: ball.setPosition(ball.initialX - perpAdj, ball.initialY - perpOpp); break;
-
                             case 3: ball.setPosition(ball.initialX - perpAdj, ball.initialY + perpOpp); break;
-
                             case 4: ball.setPosition(ball.initialX + perpAdj, ball.initialY + perpOpp); break;
-                        }
+                        } // discussion: screen axis in comparison to initial ball place #12
+
                     }// outside drag-able circle
-
-
                 }// if touched the ball
-
-
             }//ACTION_MOVE
 
             break;
@@ -582,7 +464,7 @@ public class GameView extends SurfaceView implements Runnable
 
             case MotionEvent.ACTION_UP: // ended touch
 
-                if (ball.getActionDown()) // if touched the ball in the first place.
+                if (ball.isTouched) // if touched the ball in the first place.
                 {
                     if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) < ball.width)
                     {
@@ -615,7 +497,7 @@ public class GameView extends SurfaceView implements Runnable
 
                 }
 
-                ball.setActionDown(false);
+                ball.isTouched = false;
 
                 break;
 
@@ -627,21 +509,67 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-
-
-
-
-
-
-
-
-
-
-
     /////////////////////////////////////////////////////////////////////////
     // general functions
 
 
+
+    public void showStats (Canvas screenCanvas)
+    {
+
+//        screenCanvas.drawLine(ball.prevX, ball.prevY + fixY(), ball.x, ball.y + fixY(), paint5);
+
+        screenCanvas.drawLine(screenX / 4f, 0, screenX / 4f, screenY, paint5);
+
+/*        if (ball.collision != 0) {
+            screenCanvas.drawPoint(screenX / 4f, ball.colY, paint6);
+            screenCanvas.drawLine(ball.colX, ball.colY, ball.x + fixX(), ball.y + fixY(), paint5);
+        }*/
+
+        if (showAxisBool == 1) {
+//              SHOW AXIS:
+            screenCanvas.drawLine(0, ball.initialY, screenX, ball.initialY, paint2);
+            screenCanvas.drawLine(ball.initialX, 0, ball.initialX, screenY, paint2);
+
+//              SHOW BALL AXIS:
+            screenCanvas.drawLine(0, ball.y + fixY(), screenX, ball.y + fixY(), paint4);
+            screenCanvas.drawLine(ball.x + fixX(), 0, ball.x + fixX(), screenY, paint4);
+
+//              SHOW BALL HITBOX
+            screenCanvas.drawLine(ball.x, ball.y, ball.x + ball.width, ball.y, paint3);
+            screenCanvas.drawLine(ball.x, ball.y, ball.x, ball.y + ball.height, paint3);
+            screenCanvas.drawLine(ball.x + ball.width, ball.y, ball.x + ball.width, ball.y + ball.height, paint3);
+            screenCanvas.drawLine(ball.x, ball.y + ball.height, ball.x + ball.width, ball.y + ball.height, paint3);
+
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+            screenCanvas.drawText("X: " + ball.x + fixX(), 75, 50, paint2);
+            screenCanvas.drawText("Y: " + ball.y + fixY(), 75, 75, paint2);
+            screenCanvas.drawText("Angle: " + (float) (180 / Math.PI * ball.angle), 75, 125, paint2);
+            screenCanvas.drawText("velocity: " + ball.velocity, 75, 175, paint2);
+            screenCanvas.drawText("velocityX: " + ball.velocityX, 75, 200, paint2);
+            screenCanvas.drawText("velocityY: " + ball.velocityY, 75, 225, paint2);
+            screenCanvas.drawText("HEIGHT: " + ball.HEIGHT, 75, 250, paint2);
+            screenCanvas.drawText("quarter: " + ball.quarter, 75, 274, paint2);
+            screenCanvas.drawText("Time: " + (int) game_time, screenX - 175, 125, paint2);
+            screenCanvas.drawText("range: " + ball.range, 75, 300, paint2);
+
+
+            screenCanvas.drawText("collided: " + ball.collision, screenX / 2f - ball.width * 3, ball.height * 4, paint2);
+            screenCanvas.drawText("colX: " + ball.colX, screenX / 2f - ball.width * 3, ball.height * 4.5f, paint2);
+            screenCanvas.drawText("colY: " + ball.colY, screenX / 2f - ball.width * 3, ball.height * 5, paint2);
+
+            screenCanvas.drawText("colAngle!!!!: " + ball.colAngle, screenX / 2f - ball.width * 3, screenY / 2f, paint2);
+
+            screenCanvas.drawText("colToPrevOpp: " + ball.colToPrevOpp, screenX / 2f - ball.width * 3, screenY / 2f - 25, paint2);
+            screenCanvas.drawText("colToPrevAdj: " + ball.colToPrevAdj, screenX / 2f - ball.width * 3, screenY / 2f - 50, paint2);
+        }
+
+        screenCanvas.drawBitmap(showAxis, screenX / 2f - ball.width * 3, 0, paint1);//button to show initial axis
+
+    } // TODO: THIS BLOCK IS TEMP
 
 
 
