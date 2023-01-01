@@ -10,6 +10,10 @@ import java.util.ArrayList;
 
 public class Ball
 {
+    float orgIX, orgIY; // experimental.
+    float percentOfPull;
+    int maxBallPull;         // radius of the circle which determines max dist. ball from initial point
+
     float x, y;
     short width, height;  //short is like int
     boolean isTouched = false;     // true => touchDown (on the screen).
@@ -56,8 +60,11 @@ public class Ball
         ratioPXtoM = screenX / 14;
 
         /* This isn't coordinated with real court size */
-        x = (int) ( screenX/2 /*- 2 * ratioPXtoM*/ ); // two meters to the left of the edge.
-        y = (int) ( screenY/2 /*- 2 * ratioPXtoM */); // two meters up from the bottom.
+        x = (int) ( screenX - 2 * ratioPXtoM ); // two meters to the left of the edge.
+        y = (int) ( screenY - 2 * ratioPXtoM ); // two meters up from the bottom.
+/*        x = (int) ( screenX /2 ); // two meters to the left of the edge.
+        y = (int) ( screenY /2); // two meters up from the bottom.*/
+
 
         prevX = x;
         prevY = y;
@@ -70,6 +77,8 @@ public class Ball
         initialX = x + width /2f;
         initialY = y + height /2f; // This is needed because the object:Ball is only initialized once.
 
+        orgIX = initialX;
+        orgIY = initialY;
 
         // Draw the ball:
         ballBitmap = BitmapFactory.decodeResource(res, R.drawable.basketball);
@@ -85,6 +94,7 @@ public class Ball
         howManyCols = 0;
 
         collision = 0; // = no collision.
+        percentOfPull = 0;
 
         dotArrayListX = new ArrayList<>();
         dotArrayListY = new ArrayList<>();
@@ -112,7 +122,7 @@ public class Ball
 
 
     float calcDistanceFromI(float x, float y) // To know whether or not the ball is at max distance from i.
-    {return (float) Math.sqrt((initialX - x) * (initialX - x) + (initialY - y) * (initialY -y));}
+    {return (float) Math.sqrt((orgIX - x) * (orgIX - x) + (orgIY - y) * (orgIY - y));}
 
 
 
@@ -129,6 +139,8 @@ public class Ball
         colAngle = 0;
         howManyCols = 0;
 
+        initialX = orgIX;
+        initialY = orgIY;
 
         x = initialX - width / 2f;
         y = initialY - height / 2f;
@@ -153,7 +165,7 @@ public class Ball
         {
             howManyCols++;
 
-            if (collision == 0)
+            if (collision != 1)
             {
                 collision = 1;
 
@@ -167,7 +179,7 @@ public class Ball
         {
             howManyCols++;
 
-            if (collision == 0)
+            if (collision != 3)
             {
                 collision = 3;
 
@@ -177,13 +189,15 @@ public class Ball
 
         }
 
-        else if (x - (prevX - x) <= screenX / 4f)  // ball touches the left of the screen.
+        else if (x /*- (prevX - x)*/ <= screenX / 4f)  // ball touches the left of the screen.
         {
             howManyCols++;
 
-            if (collision == 0)
+            if (collision != 2)
             {
                 collision = 2;
+
+//                velocityX *= percentOfPull;
 
                 colX = x;
                 colY = y + height / 2f;
