@@ -31,9 +31,9 @@ public class Ball
     float angle;
 
 
-    float velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
+    float removeBall_time;
+    float velocity, velocityX, velocityY, initialVelocityY, colVelocityX, colVelocityY; //VELOCITY
     float time;
-    float timeMultiplier; // discussion: Time updating #33
     float range; // of projectile.
     float HEIGHT;
     boolean thrown;
@@ -90,8 +90,8 @@ public class Ball
         GRAVITY = 9.8f * ratioPXtoM;
         MAX_VELOCITY = 14 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
-        timeMultiplier = 2.5f;
         howManyCols = 0;
+        removeBall_time = 0;
 
         collision = 0; // = no collision.
         percentOfPull = 0;
@@ -149,6 +149,7 @@ public class Ball
         prevY = y;
 
         angle = 0;
+        removeBall_time = 0;
 
         dotArrayListX.clear();
         dotArrayListY.clear(); // erase dots.
@@ -198,6 +199,10 @@ public class Ball
                 collision = 2;
 
 //                velocityX *= percentOfPull;
+
+                colVelocityX = percentOfPull * velocityX;
+                colVelocityY = percentOfPull * velocityY;
+
 
                 colX = x;
                 colY = y + height / 2f;

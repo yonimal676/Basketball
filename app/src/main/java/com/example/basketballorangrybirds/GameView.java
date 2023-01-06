@@ -31,7 +31,6 @@ public class GameView extends SurfaceView implements Runnable
     private final int screenX, screenY;
     private final byte SLEEP_MILLIS = 16; // byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 fps)
     private float game_time;
-    private float removeBall_time; // counts how much has ball.x < 0
     private boolean isPlaying;
     private Thread thread;
     private final GameActivity activity;
@@ -112,7 +111,6 @@ public class GameView extends SurfaceView implements Runnable
         showAxisBool = 1;
         quarterOfLaunch = 0;
         ball.thrown = false;
-        removeBall_time = 0;
     }
 
 
@@ -140,7 +138,7 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-        if (quarterOfLaunch != 0)
+        if (ball.thrown)
             if (ball.x >= ball.orgIX) // right side:
                 if (ball.y < ball.orgIY) // -top.
                     ball.quarter = 1;
@@ -187,107 +185,114 @@ public class GameView extends SurfaceView implements Runnable
     public void physicsUpdate (float orgX, float orgY) // origin of throw (for collision).
     {
 
-        if (ball.thrown) {
-            ball.prevX = ball.x;
-            ball.prevY = ball.y;
-            // discussion: Changing Direction #34 || to prevent a bug (of dotArrayListX/Y) -> discussion: The Dots look disgusting #28
+        ball.prevX = ball.x;
+        ball.prevY = ball.y;
+        // discussion: Changing Direction #34 || to prevent a bug (of dotArrayListX/Y) -> discussion: The Dots look disgusting #28
 
 
-            if (quarterOfLaunch == 1 || quarterOfLaunch == 2) // throwing the ball downwards.
-                ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
-            else
-                ball.GRAVITY = Math.abs(ball.GRAVITY);
+        if (quarterOfLaunch == 1 || quarterOfLaunch == 2) // throwing the ball downwards.
+            ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
+        else
+            ball.GRAVITY = Math.abs(ball.GRAVITY);
 
 
-            ball.velocityY = ball.initialVelocityY - (ball.GRAVITY * ball.time);
+        ball.velocityY = ball.initialVelocityY - (ball.GRAVITY * ball.time);
 
-
+///                        ball.initialVelocityY = (short) Math.abs(Math.sin(ball.angle) * ball.velocity); // ✓
 
 //        if ( ball.collision == 0 )
 
-            switch (ball.collision) {
+        switch (ball.collision)
+        {
 
-                case 0:
-                    switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
-                    {
-                        case 1:
-                            ball.x = orgX - ball.velocityX * ball.time;
-                            ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
+            case 0:
+                switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
+                {
+                    case 1:
+                        ball.x = orgX - ball.velocityX * ball.time;
+                        ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                        break;
 
-                        case 2:
-                            ball.x = orgX + ball.velocityX * ball.time;
-                            ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
+                    case 2:
+                        ball.x = orgX + ball.velocityX * ball.time;
+                        ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                        break;
 
-                        case 3:
-                            ball.x = orgX + ball.velocityX * ball.time;
-                            ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
+                    case 3:
+                        ball.x = orgX + ball.velocityX * ball.time;
+                        ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                        break;
 
-                        case 4:
-//                        ball.x = ball.colX - (ball.initialX - screenX / 4f) + ball.velocityX * ball.time; // to the left
-                            ball.x = orgX - ball.velocityX * ball.time; // to the left
-                            ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-                    }
+                    case 4:
+                        ball.x = orgX - ball.velocityX * ball.time; // to the left
+                        ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                        break;
+                }
+                break;
+
+
+            case 1: switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
+            {
+                case 1:
+                    ball.x = orgX  - (ball.initialX + screenX / 4f) + ball.velocityX * ball.time;
+                    ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
                     break;
-
-
-                case 1: switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
-                    {
-                        case 1:
-                            ball.x = orgX  - (ball.initialX + screenX / 4f) + ball.velocityX * ball.time;
-                            ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-
-                        case 2:
-                            ball.x = orgX + ball.velocityX * ball.time;
-                            ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-
-                        case 3:
-                            ball.x = orgX + ball.velocityX * ball.time;
-                            ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-
-                        case 4:
-                            ball.x = ball.colX - (ball.initialX - screenX / 4f) + ball.velocityX * ball.time; // to the left
-                            ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-                    }
-                    break;
-
 
                 case 2:
-                    switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
-                    {
-                        case 1:
-                            ball.x = orgX  - (ball.initialX + screenX / 4f) + ball.velocityX * ball.time;
-                            ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-
-                        case 2:
-                            ball.x = orgX - ball.velocityX * ball.time;
-                            ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-
-                        case 3:
-                            ball.x = orgX - ball.velocityX * ball.time;
-                            ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-
-                        case 4:
-                            ball.x = ball.colX - (ball.initialX - screenX / 4f) + ball.velocityX * ball.time; // to the left
-                            ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                            break;
-                    }
+                    ball.x = orgX + ball.velocityX * ball.time;
+                    ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
                     break;
 
-                case 3: break;
+                case 3:
+                    ball.x = orgX + ball.velocityX * ball.time;
+                    ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                    break;
 
-
+                case 4:
+                    ball.x = ball.colX - (ball.initialX - screenX / 4f) + ball.velocityX * ball.time; // to the left
+                    ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                    break;
             }
+                break;
+
+
+            case 2:
+                if (ball.colToPrevAdj == 0)
+                    ball.colToPrevAdj = Math.abs(ball.prevX - ball.colX);
+                if (ball.colToPrevOpp == 0)
+                    ball.colToPrevOpp = Math.abs(ball.colY - ball.y);
+
+                if (ball.colAngle == 0)
+                    ball.colAngle = (float) Math.atan2( Math.abs(ball.prevX - ball.colX), Math.abs(ball.colY - ball.y) );
+
+
+
+
+                switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
+                {
+                    case 1:
+                        ball.x = orgX  - (ball.initialX + screenX / 4f) + ball.velocityX * ball.time;
+                        ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                        break;
+
+                    case 2:
+                        ball.x = orgX - ball.velocityX * ball.time;
+                        ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                        break;
+
+                    case 3:
+                        ball.x = orgX - ball.velocityX * ball.time;
+                        ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                        break;
+
+                    case 4:
+                        ball.x = (float) (ball.colX - (ball.initialX - screenX / 4f) + ball.colVelocityX * ball.time); // to the left
+                        ball.y = (float) (ball.colY - 0.5 * (ball.initialVelocityY + ball.colVelocityY) * ball.time);
+                        break;
+                }
+                break;
+
+            case 3: break;
 
         }
 
@@ -311,7 +316,7 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-            if (ball.time/ball.timeMultiplier > 0.032)
+            if (ball.time > 0.032)
                 for (int i = 0; i < ball.dotArrayListX.size() - 1; i++)
                     try{screenCanvas.drawPoint(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), paint1);}
                     catch (Exception ignored) {}
@@ -382,17 +387,17 @@ public class GameView extends SurfaceView implements Runnable
 
         //count time from throw:
         if (ball.thrown)
-            ball.time += 0.016f * ball.timeMultiplier;
+            ball.time += (60 / 1000f);
         else
             ball.time = 0;
 
-        game_time += 0.016f;
+        game_time += (60 / 1000f);
 
 
-        if (ball.collision == 3 && removeBall_time == 0)
-            removeBall_time = ball.time;
+        if (ball.collision == 3 && ball.removeBall_time == 0)
+            ball.removeBall_time = ball.time;
 
-        if (removeBall_time != 0 && ball.time - removeBall_time > 1)
+        if (ball.removeBall_time != 0 && ball.time - ball.removeBall_time > 2)
             ball.reset();
 
 
@@ -493,8 +498,8 @@ public class GameView extends SurfaceView implements Runnable
                 {
                     if (ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) < ball.width)
                     {
-                        ball.x = ball.initialX /*- fixX()*/;
-                        ball.y = ball.initialY /*- fixY()*/;
+                        ball.x = ball.orgIX - fixX();
+                        ball.y = ball.orgIY - fixY();
                     } // discussion: Disable ball movement when only touched briefly #31
 
 
@@ -505,11 +510,11 @@ public class GameView extends SurfaceView implements Runnable
 
                         ball.percentOfPull = ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) / ball.maxBallPull;
 
-                        ball.velocity = ball.percentOfPull * ball.MAX_VELOCITY;
+                        ball.velocity = (short) (ball.percentOfPull * ball.MAX_VELOCITY);
                         // Percent of pull * max velocity = percent of max velocity
 
-                        ball.velocityX = (float) Math.abs(Math.cos(ball.angle) * ball.velocity); // ✓
-                        ball.initialVelocityY = (float) Math.abs(Math.sin(ball.angle) * ball.velocity); // ✓
+                        ball.velocityX = (short) Math.abs(Math.cos(ball.angle) * ball.velocity); // ✓
+                        ball.initialVelocityY = (short) Math.abs(Math.sin(ball.angle) * ball.velocity); // ✓
                         // Both of these values never change after the ball is thrown.
 
 
