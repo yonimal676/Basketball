@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 public class Ball
 {
+    float nextX, nextY;
     float orgIX, orgIY; // experimental.
     float percentOfPull;
     int maxBallPull;         // radius of the circle which determines max dist. ball from initial point
@@ -32,7 +33,7 @@ public class Ball
 
 
     float removeBall_time;
-    float velocity, velocityX, velocityY, initialVelocityY, colVelocityX, colVelocityY; //VELOCITY
+    short velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
     float time;
     float range; // of projectile.
     float HEIGHT;
@@ -57,9 +58,8 @@ public class Ball
         this.screenY = screenY;
 
         // Basketball court: 28m long  ->  screenX = half a basketball court ( 14m )
-        ratioPXtoM = screenX / 14;
+        ratioPXtoM = screenX / 20;
 
-        /* This isn't coordinated with real court size */
         x = (int) ( screenX - 2 * ratioPXtoM ); // two meters to the left of the edge.
         y = (int) ( screenY - 2 * ratioPXtoM ); // two meters up from the bottom.
 /*        x = (int) ( screenX /2 ); // two meters to the left of the edge.
@@ -68,6 +68,8 @@ public class Ball
 
         prevX = x;
         prevY = y;
+        nextX = x;
+        nextY = y;
 
         // basketball diameter 24.1 cm or 0.241 meters * 2 for better looks
         width = (short) (0.241 * 2 * ratioPXtoM);
@@ -88,7 +90,7 @@ public class Ball
 
         // Physics-related stuff:
         GRAVITY = 9.8f * ratioPXtoM;
-        MAX_VELOCITY = 14 * ratioPXtoM; // also max pull | meters per second.
+        MAX_VELOCITY = 18 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
         howManyCols = 0;
         removeBall_time = 0;
@@ -115,7 +117,12 @@ public class Ball
 
     float ballAngle() // from initial position.
     {return angle = (float) (Math.atan2(initialY - (y + height / 2f), initialX - (x + width / 2f)));}
+/*
+    The atan() and atan2() functions calculate the arc-tangent of x and y/x, respectively.
 
+    The atan() function returns a value in the range -π/2 to π/2 radians.
+    The atan2() function returns a value in the range -π to π radians.
+ */
 
     float findAngleWhenOutside(float Tx, float Ty) // Find Angle When Finger Is Touching Outside, T - Touch point || * returns a radian
     {return (float) (Math.atan2(initialY - Ty, initialX - Tx ));} // discussion: "degrees vs radians"
@@ -132,9 +139,6 @@ public class Ball
         collision = 0; // = no collision.
         colX = 0;
         colY = 0;
-
-        colToPrevAdj = 0;
-        colToPrevOpp = 0;
 
         colAngle = 0;
         howManyCols = 0;
@@ -160,7 +164,7 @@ public class Ball
 
     public void didCollide(int groundHeight)
     {
-        // TODO : expect only one hit to work cuz only one colX/Y are recorded.
+        // TODO : expect only one hit to work cuz only one colX/Y are recorded. * 2later: hmm... not sure 'bout that
 
         if (x + width >= screenX)  // ball touches the right of the screen.
         {
@@ -190,7 +194,7 @@ public class Ball
 
         }
 
-        else if (x /*- (prevX - x)*/ <= screenX / 4f)  // ball touches the left of the screen.
+        else if (x /*- (prevX - x)  // nextX */ <= screenX / 4f)  // ball touches the left of the screen.
         {
             howManyCols++;
 
@@ -198,11 +202,11 @@ public class Ball
             {
                 collision = 2;
 
-//                velocityX *= percentOfPull;
+                velocityX *= percentOfPull * percentOfPull; // so for example 0.8 percent = 0.64
+                initialVelocityY *= percentOfPull;
 
-                colVelocityX = percentOfPull * velocityX;
-                colVelocityY = percentOfPull * velocityY;
-
+//                velocityX = (short) Math.abs(Math.cos(colAngle) * velocity);
+//                initialVelocityY = (short) Math.abs(Math.sin(colAngle) * velocity);
 
                 colX = x;
                 colY = y + height / 2f;
@@ -214,6 +218,19 @@ public class Ball
             collision = 0; // no collision.
     }
 
+
+    byte detectDirection ()
+    {
+        if (prevX >= x) // left
+            if (prevY >= y) return 2; // up
+            else return 3;
+        else
+            if (prevY >= y) return 1; // up
+            else return 4;
+    }
+
+
+    void calcNextPosition () {}
 
 
 

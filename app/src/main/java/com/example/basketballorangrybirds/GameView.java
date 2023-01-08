@@ -80,7 +80,7 @@ public class GameView extends SurfaceView implements Runnable
         paint2 = new Paint();
         paint2.setColor(Color.GREEN);
         paint2.setStyle(Paint.Style.FILL);
-        paint2.setStrokeWidth(6f);
+        paint2.setStrokeWidth(5f);
 
 
         paint3 = new Paint();
@@ -139,165 +139,120 @@ public class GameView extends SurfaceView implements Runnable
 
 
         if (ball.thrown)
-            if (ball.x >= ball.orgIX) // right side:
-                if (ball.y < ball.orgIY) // -top.
-                    ball.quarter = 1;
-                else                     // -bottom.
-                    ball.quarter = 4;
-            else                      // left side:
-                if (ball.y < ball.orgIY) // -top.
-                    ball.quarter = 2;
-                else                     // -bottom.
-                    ball.quarter = 3;
-
-
-
-
-        if (ball.thrown)
         {
-            if (ball.y > screenY) // make the height logical and not technical.
-                ball.HEIGHT =  -1 * Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
-            else
-                ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
 
+            ball.prevX = ball.x;
+            ball.prevY = ball.y; // for collision physics.
+            // discussion: Changing Direction #34 || to prevent a bug (of dotArrayListX/Y) -> discussion: The Dots look disgusting #28
+
+
+/*            // determine the current quarter of the ball after launch. todo: I don't think this is necessary...
+            if (ball.x >= ball.orgIX) // right side:
+                if (ball.y < ball.orgIY) ball.quarter = 1;// -top.
+                else ball.quarter = 4;                    // -bottom.
+            else // left side:
+                if (ball.y < ball.orgIY) ball.quarter = 2;// -top.
+                else ball.quarter = 3;                    // -bottom.
+
+            if (ball.y > screenY) ball.HEIGHT =  -1 * Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
+            else ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
+            // in case I want the height in meters; make the height logical and not technical.  todo: I don't think this is necessary...
+*/
+
+
+            if (quarterOfLaunch == 1 || quarterOfLaunch == 2)
+                ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);// throwing the ball downwards.
+            else ball.GRAVITY = Math.abs(ball.GRAVITY);
 
             ball.didCollide(ground.height);
+            ball.velocityY = (short) (ball.initialVelocityY - (ball.GRAVITY * ball.time));
 
+            //todo: remember that nextX/Y is a possibility!!!!!!!!!!!!!!!!!
 
-            physicsUpdate(ball.initialX, ball.initialY);
+            if (ball.collision == 0)
+                physicsUpdateNoCol();
+            else
+                physicsUpdate(ball.collision, ball.detectDirection());
 
         }
 
 
-
-            /* After ball axis are set, and we have the previous ball axis, we can now begin with
-             what I said in discussion: Changing Direction #34 -> 3. 2nd attempt: */
+        /* After ball axis are set, and we have the previous ball axis, we can now begin with
+         what I said in discussion: Changing Direction #34 -> 3. 2nd attempt: */
 
 
         ball.dotArrayListX.add(ball.prevX + fixX()); // → ↓
         ball.dotArrayListY.add(ball.prevY + fixY()); // show path of the ball
 
-    }// if (thrown)
+    }/* UPDATE */
 
 
-
-
-    public void physicsUpdate (float orgX, float orgY) // origin of throw (for collision).
+    public void physicsUpdateNoCol() // origin of throw (for collision) | col -> collision number (type)
     {
 
-        ball.prevX = ball.x;
-        ball.prevY = ball.y;
-        // discussion: Changing Direction #34 || to prevent a bug (of dotArrayListX/Y) -> discussion: The Dots look disgusting #28
+        ball.velocityY = (short) (ball.initialVelocityY - (ball.GRAVITY * ball.time));
 
 
-        if (quarterOfLaunch == 1 || quarterOfLaunch == 2) // throwing the ball downwards.
-            ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);
-        else
-            ball.GRAVITY = Math.abs(ball.GRAVITY);
 
-
-        ball.velocityY = ball.initialVelocityY - (ball.GRAVITY * ball.time);
-
-///                        ball.initialVelocityY = (short) Math.abs(Math.sin(ball.angle) * ball.velocity); // ✓
-
-//        if ( ball.collision == 0 )
-
-        switch (ball.collision)
+        switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
         {
-
-            case 0:
-                switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
-                {
-                    case 1:
-                        ball.x = orgX - ball.velocityX * ball.time;
-                        ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                        break;
-
-                    case 2:
-                        ball.x = orgX + ball.velocityX * ball.time;
-                        ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                        break;
-
-                    case 3:
-                        ball.x = orgX + ball.velocityX * ball.time;
-                        ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                        break;
-
-                    case 4:
-                        ball.x = orgX - ball.velocityX * ball.time; // to the left
-                        ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                        break;
-                }
+            case 1:
+                ball.x = ball.initialX - ball.velocityX * ball.time;
+                ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
                 break;
-
-
-            case 1: switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
-            {
-                case 1:
-                    ball.x = orgX  - (ball.initialX + screenX / 4f) + ball.velocityX * ball.time;
-                    ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                    break;
-
-                case 2:
-                    ball.x = orgX + ball.velocityX * ball.time;
-                    ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                    break;
-
-                case 3:
-                    ball.x = orgX + ball.velocityX * ball.time;
-                    ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                    break;
-
-                case 4:
-                    ball.x = ball.colX - (ball.initialX - screenX / 4f) + ball.velocityX * ball.time; // to the left
-                    ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                    break;
-            }
-                break;
-
 
             case 2:
-                if (ball.colToPrevAdj == 0)
-                    ball.colToPrevAdj = Math.abs(ball.prevX - ball.colX);
-                if (ball.colToPrevOpp == 0)
-                    ball.colToPrevOpp = Math.abs(ball.colY - ball.y);
+                ball.x = ball.initialX + ball.velocityX * ball.time;
+                ball.y = (float) (ball.initialY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                break;
 
-                if (ball.colAngle == 0)
-                    ball.colAngle = (float) Math.atan2( Math.abs(ball.prevX - ball.colX), Math.abs(ball.colY - ball.y) );
+            case 3:
+                ball.x = ball.initialX + ball.velocityX * ball.time;
+                ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                break;
+
+            case 4:
+                ball.x = ball.initialX - ball.velocityX * ball.time; // to the left
+                ball.y = (float) (ball.initialY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+                break;
+        }
+    }
 
 
 
 
+
+    public void physicsUpdate (byte col, byte direction) // col -> collision number (type) | direction of the ball
+    {
+
+        switch (col)
+        {
+            case 1:
                 switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
                 {
-                    case 1:
-                        ball.x = orgX  - (ball.initialX + screenX / 4f) + ball.velocityX * ball.time;
-                        ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                        break;
-
-                    case 2:
-                        ball.x = orgX - ball.velocityX * ball.time;
-                        ball.y = (float) (orgY + 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                        break;
-
-                    case 3:
-                        ball.x = orgX - ball.velocityX * ball.time;
-                        ball.y = (float) (orgY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-                        break;
-
-                    case 4:
-                        ball.x = (float) (ball.colX - (ball.initialX - screenX / 4f) + ball.colVelocityX * ball.time); // to the left
-                        ball.y = (float) (ball.colY - 0.5 * (ball.initialVelocityY + ball.colVelocityY) * ball.time);
-                        break;
                 }
                 break;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            case 2:
+
+                ball.colAngle = (float) (Math.atan2(ball.prevX, ball.prevY));
+
+
+
+                ball.x = ball.colX + ball.velocityX * ball.time;
+                ball.y = (float) (ball.colY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+
+
+                break;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 3: break;
 
         }
 
     }
-
 
 
     public void draw ()
@@ -375,7 +330,7 @@ public class GameView extends SurfaceView implements Runnable
             }
             getHolder().unlockCanvasAndPost(screenCanvas);
         }
-    }
+    } /* DRAW */
 
 
 
@@ -401,7 +356,7 @@ public class GameView extends SurfaceView implements Runnable
             ball.reset();
 
 
-    }
+    } /* SLEEP */
 
 
 
@@ -525,7 +480,8 @@ public class GameView extends SurfaceView implements Runnable
                         ball.initialY = ball.y;
 
 
-                        ball.range = (float) ((ball.velocity * ball.velocity * Math.sin(2 * ball.angle) * Math.sin(2 * ball.angle)) / ball.GRAVITY / ball.ratioPXtoM);
+                        ball.range = (float) ((ball.velocity * ball.velocity * Math.sin(2 * ball.angle) * Math.sin(2 * ball.angle))
+                                / ball.GRAVITY / ball.ratioPXtoM);
 
 
                     }
@@ -598,10 +554,8 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawText("colX: " + ball.colX, screenX / 2f - ball.width * 3, ball.height * 4.5f, paint2);
             screenCanvas.drawText("colY: " + ball.colY, screenX / 2f - ball.width * 3, ball.height * 5, paint2);
 
-            screenCanvas.drawText("colAngle!!!!: " + 180/Math.PI * ball.colAngle, screenX / 2f - ball.width * 3, screenY / 2f, paint2);
+            screenCanvas.drawText("colAngle!!!!: " + 180/Math.PI * ball.colAngle, screenX / 2f - ball.width * 3, ball.height * 6, paint2);
 
-            screenCanvas.drawText("colToPrevOpp: " + ball.colToPrevOpp, screenX / 2f - ball.width * 3, screenY / 2f - 25, paint2);
-            screenCanvas.drawText("colToPrevAdj: " + ball.colToPrevAdj, screenX / 2f - ball.width * 3, screenY / 2f - 50, paint2);
         }
 
         screenCanvas.drawBitmap(showAxis, screenX / 2f - ball.width * 3, 0, paint1);//button to show initial axis
