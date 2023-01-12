@@ -22,14 +22,12 @@ public class GameView extends SurfaceView implements Runnable
 
     private Background background;
     private Ball ball;
-    private Player player;
     private Basket basket;
     private final Ground ground;
     // Objects
 
 
-    private final int screenX, screenY;
-    private final byte SLEEP_MILLIS = 16; // byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 fps)
+    private final short screenX, screenY;
     private float game_time;
     private boolean isPlaying;
     private Thread thread;
@@ -46,7 +44,7 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-    public GameView(GameActivity activity, int screenX,  int screenY)
+    public GameView(GameActivity activity, short screenX, short screenY)
     {
         super(activity);
 
@@ -65,9 +63,12 @@ public class GameView extends SurfaceView implements Runnable
         ground = new Ground(getResources(), screenX, screenY);
 
 
-        ball.maxBallPull = (int) (screenY - ground.height - ball.initialY - ball.height); // the radius of max dist of the ball from the initial position
+        ball.maxBallPull = (short) (screenY - ground.height - ball.initialY - ball.height); // the radius of max dist of the ball from the initial position
 
         game_time = 0;
+
+        quarterOfLaunch = 0;
+        ball.thrown = false;
 
 
         paint1 = new Paint();
@@ -107,10 +108,8 @@ public class GameView extends SurfaceView implements Runnable
 
         showAxis = BitmapFactory.decodeResource(getResources(), R.drawable.play_btn);
         showAxis = Bitmap.createScaledBitmap(showAxis, ball.width * 3, ball.height * 3, false);
-
         showAxisBool = 1;
-        quarterOfLaunch = 0;
-        ball.thrown = false;
+
     }
 
 
@@ -154,31 +153,31 @@ public class GameView extends SurfaceView implements Runnable
                 if (ball.y < ball.orgIY) ball.quarter = 2;// -top.
                 else ball.quarter = 3;                    // -bottom.
 
-            if (ball.y > screenY) ball.HEIGHT =  -1 * Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
-            else ball.HEIGHT = Math.abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
+            if (ball.y > screenY) ball.HEIGHT =  -1 * abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
+            else ball.HEIGHT = abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
             // in case I want the height in meters; make the height logical and not technical.  todo: I don't think this is necessary...
 */
 
-
             if (quarterOfLaunch == 1 || quarterOfLaunch == 2)
-                ball.GRAVITY = -1 * Math.abs(ball.GRAVITY);// throwing the ball downwards.
-            else ball.GRAVITY = Math.abs(ball.GRAVITY);
+                ball.GRAVITY = -1 * abs(ball.GRAVITY);// throwing the ball downwards.
+            else ball.GRAVITY = abs(ball.GRAVITY);
 
-            ball.didCollide(ground.height);
-            ball.velocityY = (short) (ball.initialVelocityY - (ball.GRAVITY * ball.time));
 
             //todo: remember that nextX/Y is a possibility!!!!!!!!!!!!!!!!!
+
+            ball.didCollide(ground.height);
+
+            ball.velocityY = (short) (ball.initialVelocityY - (ball.GRAVITY * ball.time));
 
             if (ball.collision == 0)
                 physicsUpdateNoCol();
             else
-                physicsUpdate(ball.collision, ball.detectDirection());
+                physicsUpdate(ball.collision);
+
+//            ball.didCollide(ground.height);//////////////////
+
 
         }
-
-
-        /* After ball axis are set, and we have the previous ball axis, we can now begin with
-         what I said in discussion: Changing Direction #34 -> 3. 2nd attempt: */
 
 
         ball.dotArrayListX.add(ball.prevX + fixX()); // → ↓
@@ -187,10 +186,27 @@ public class GameView extends SurfaceView implements Runnable
     }/* UPDATE */
 
 
-    public void physicsUpdateNoCol() // origin of throw (for collision) | col -> collision number (type)
+    public void physicsUpdateNoCol()
     {
 
-        ball.velocityY = (short) (ball.initialVelocityY - (ball.GRAVITY * ball.time));
+
+/*        if (quarterOfLaunch == 2) {
+            ball.velocityX = abs(ball.velocityX);
+            ball.velocityY = abs(ball.velocityY);
+        }
+        else {
+
+            ball.velocityX = -1 * abs(ball.velocityX);
+            ball.velocityY = -1 * abs(ball.velocityY);
+
+            ball.velocityY = quarterOfLaunch == 1 ? abs(ball.velocityY) : -1 * abs(ball.velocityY);
+            ball.velocityX = quarterOfLaunch == 3 ? abs(ball.velocityX) : -1 * abs(ball.velocityX);
+        }
+
+
+
+        ball.x = ball.velocityX * ball.time + ball.initialX;
+        ball.y = (float) (ball.velocityY * ball.time + (0.5 * ball.GRAVITY * ball.time * ball.time)) + ball.initialY;*/
 
 
 
@@ -222,26 +238,34 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-    public void physicsUpdate (byte col, byte direction) // col -> collision number (type) | direction of the ball
+    public void physicsUpdate (byte col) // col -> collision number (type) | direction of the ball
     {
+
+        ball.initialX = ball.colX;
+        ball.initialY = ball.colY;
 
         switch (col)
         {
-            case 1:
-                switch (quarterOfLaunch) // discussion: From where has the ball been thrown? #24 || physics #17
-                {
-                }
-                break;
+            case 1: break;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 2:
 
-                ball.colAngle = (float) (Math.atan2(ball.prevX, ball.prevY));
 
 
+                if (ball.colAngle == 0)
+                    ball.colAngle = abs(Math.atan(ball.prevY/ball.prevX));
+//                    ball.colAngle =  (Math.atan2(abs(ball.prevY - ball.colY), abs(ball.prevX - ball.colX)));
 
-                ball.x = ball.colX + ball.velocityX * ball.time;
-                ball.y = (float) (ball.colY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
+
+                ball.initialVelocityY = (short) abs(Math.sin(ball.colAngle) * ball.velocity);
+                ball.velocityY = (short) (ball.initialVelocityY - (ball.GRAVITY * ball.time));
+                ball.velocityX = (short) abs(Math.cos(ball.angle) * ball.velocity); // ✓
+
+
+                ball.x = ball.velocityX * ball.time - ball.initialX;
+                ball.y = (float) (ball.colY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time) + ball.initialY;
 
 
                 break;
@@ -272,12 +296,11 @@ public class GameView extends SurfaceView implements Runnable
 
 
             if (ball.time > 0.032)
-                for (int i = 0; i < ball.dotArrayListX.size() - 1; i++)
+                for (short i = 0; i < ball.dotArrayListX.size() - 1; i++)
                     try{screenCanvas.drawPoint(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), paint1);}
                     catch (Exception ignored) {}
 
             // discussion: The Dots look disgusting #28
-            //TODO: the try-catch block is temporary, remove after game is complete.
 
 
 
@@ -298,8 +321,8 @@ public class GameView extends SurfaceView implements Runnable
                     // line is only drawn when the ball is farther from the center
                     // than the radius of the ball, otherwise it will be drawn inside the ball itself.
 
-                    float lineStopX = (float) Math.abs((Math.cos(ball.ballAngle()) * ball.width / 2f)); // similar to perpAdj
-                    float lineStopY = (float) Math.abs((Math.sin(ball.ballAngle()) * ball.width / 2f)); // similar to perpOpp
+                    float lineStopX = abs((Math.cos(ball.ballAngle()) * ball.width / 2f)); // similar to perpAdj
+                    float lineStopY = abs((Math.sin(ball.ballAngle()) * ball.width / 2f)); // similar to perpOpp
                     // issue: correcting the line with the ball #13
 
 
@@ -337,16 +360,19 @@ public class GameView extends SurfaceView implements Runnable
 
     private void sleep() // discussion: Time updating #33
     {
-        try { Thread.sleep(SLEEP_MILLIS); }// = 16
+        // byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 FPS)
+        byte SLEEP_MILLIS = (byte) (1000 / 60f);// = 16.2/3
+
+        try { Thread.sleep(SLEEP_MILLIS); }
         catch (InterruptedException e) {e.printStackTrace();}
 
         //count time from throw:
         if (ball.thrown)
-            ball.time += (60 / 1000f);
+            ball.time += SLEEP_MILLIS / 1000f;
         else
             ball.time = 0;
 
-        game_time += (60 / 1000f);
+        game_time += SLEEP_MILLIS / 1000f;
 
 
         if (ball.collision == 3 && ball.removeBall_time == 0)
@@ -360,8 +386,7 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-    public float fixX() {return ball.width/2f;}// for comfortable coding.
-    public float fixY() {return ball.height/2f;}// for comfortable coding.
+
 
 
 
@@ -415,6 +440,8 @@ public class GameView extends SurfaceView implements Runnable
                         else
                             ball.quarter = 3; // bottom left corner
 
+                    // TODO: DON'T EVER CHANGE THIS !!!
+
 
 
 
@@ -426,8 +453,8 @@ public class GameView extends SurfaceView implements Runnable
 
                     else // issue: finger drag outside of radius #4
                     {
-                        float perpOpp = (float) Math.abs(Math.sin(angle_of_touch) * ball.maxBallPull); // for y of maxBallPull
-                        float perpAdj = (float) Math.abs(Math.cos(angle_of_touch) * ball.maxBallPull); // for x
+                        float perpOpp = abs(Math.sin(angle_of_touch) * ball.maxBallPull); // for y of maxBallPull
+                        float perpAdj = abs(Math.cos(angle_of_touch) * ball.maxBallPull); // for x
                         //  perp- perpendicular (ניצב), adj- adjacent (ליד), opp- opposite (מול)
 
 
@@ -465,11 +492,11 @@ public class GameView extends SurfaceView implements Runnable
 
                         ball.percentOfPull = ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) / ball.maxBallPull;
 
-                        ball.velocity = (short) (ball.percentOfPull * ball.MAX_VELOCITY);
+                        ball.velocity = ball.percentOfPull * ball.MAX_VELOCITY;
                         // Percent of pull * max velocity = percent of max velocity
 
-                        ball.velocityX = (short) Math.abs(Math.cos(ball.angle) * ball.velocity); // ✓
-                        ball.initialVelocityY = (short) Math.abs(Math.sin(ball.angle) * ball.velocity); // ✓
+                        ball.velocityX = abs(Math.cos(ball.angle) * ball.velocity); // ✓
+                        ball.initialVelocityY = abs(Math.sin(ball.angle) * ball.velocity); // ✓
                         // Both of these values never change after the ball is thrown.
 
 
@@ -512,7 +539,7 @@ public class GameView extends SurfaceView implements Runnable
 
         screenCanvas.drawLine(ball.prevX, ball.prevY + fixY(), ball.x, ball.y + fixY(), paint5);
 
-        screenCanvas.drawLine(screenX / 4f, 0, screenX / 4f, screenY, paint5);
+        screenCanvas.drawLine(0, 0, 0, screenY, paint5);
 
         if (ball.collision != 0) {
             screenCanvas.drawPoint(ball.colX, ball.colY, paint6);
@@ -546,7 +573,7 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawText("velocityY: " + ball.velocityY, 75, 225, paint2);
             screenCanvas.drawText("HEIGHT: " + ball.HEIGHT, 75, 250, paint2);
             screenCanvas.drawText("quarter: " + ball.quarter, 75, 274, paint2);
-            screenCanvas.drawText("Time: " + (int) game_time, screenX - 175, 125, paint2);
+            screenCanvas.drawText("Time: " + (int) game_time +"s", screenX - 200, 125, paint2);
             screenCanvas.drawText("range: " + ball.range, 75, 300, paint2);
 
 
@@ -555,6 +582,10 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawText("colY: " + ball.colY, screenX / 2f - ball.width * 3, ball.height * 5, paint2);
 
             screenCanvas.drawText("colAngle!!!!: " + 180/Math.PI * ball.colAngle, screenX / 2f - ball.width * 3, ball.height * 6, paint2);
+            screenCanvas.drawText("direction: " + ball.detectDirection(), screenX / 2f - ball.width * 3, ball.height * 6.5f, paint2);
+            screenCanvas.drawText("quarterOfLaunch: " + quarterOfLaunch, screenX / 2f - ball.width * 3, ball.height * 7, paint2);
+
+
 
         }
 
@@ -591,4 +622,9 @@ public class GameView extends SurfaceView implements Runnable
     public Context getGameActivityContext() {
         return gameActivityContext;
     }
+
+
+    public float fixX() {return ball.width/2f;}// for comfortable coding.
+    public float fixY() {return ball.height/2f;}// for comfortable coding.
+    public float abs(double num) {return (float) Math.abs(num);} // saves space -> '(float)' and 'Math.' are unnecessary.
 }

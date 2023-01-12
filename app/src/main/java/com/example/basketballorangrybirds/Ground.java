@@ -7,8 +7,8 @@ import android.graphics.Rect;
 
 public class Ground
 {
-    int x,y;
-    int width, height;
+    short x,y;
+    short width, height;
 
     float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
@@ -20,12 +20,12 @@ public class Ground
 
         ratioPXtoM = screenX / 14f;
 
-        width = screenX;
+        width = (short) screenX;
 
-        height = (int) (0.4 * ratioPXtoM); // discussion: screen ratios #21
+        height = (short) (0.4 * ratioPXtoM); // discussion: screen ratios #21
 
         x = 0;
-        y = screenY - height;
+        y = (short) (screenY - height);
 
 
         groundBitmap = BitmapFactory.decodeResource(res, R.drawable.ground);

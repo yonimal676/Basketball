@@ -10,10 +10,9 @@ import java.util.ArrayList;
 
 public class Ball
 {
-    float nextX, nextY;
     float orgIX, orgIY; // experimental.
     float percentOfPull;
-    int maxBallPull;         // radius of the circle which determines max dist. ball from initial point
+    short maxBallPull;         // radius of the circle which determines max dist. ball from initial point
 
     float x, y;
     short width, height;  //short is like int
@@ -22,7 +21,6 @@ public class Ball
 
     float prevX, prevY;
     float colX, colY; // collision x, y coordinates.
-    float colToPrevAdj, colToPrevOpp;
     float colAngle; // collision angle.
 
 
@@ -33,7 +31,7 @@ public class Ball
 
 
     float removeBall_time;
-    short velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
+    float velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
     float time;
     float range; // of projectile.
     float HEIGHT;
@@ -58,18 +56,17 @@ public class Ball
         this.screenY = screenY;
 
         // Basketball court: 28m long  ->  screenX = half a basketball court ( 14m )
-        ratioPXtoM = screenX / 20;
+        ratioPXtoM = screenX / 14; // TODO: remember that if you scale this up, the ball will NOT move in the same ratio!!
 
         x = (int) ( screenX - 2 * ratioPXtoM ); // two meters to the left of the edge.
         y = (int) ( screenY - 2 * ratioPXtoM ); // two meters up from the bottom.
-/*        x = (int) ( screenX /2 ); // two meters to the left of the edge.
-        y = (int) ( screenY /2); // two meters up from the bottom.*/
+
+/*        x = (int) ( screenX /2 );
+        y = (int) ( screenY /2);*/
 
 
         prevX = x;
         prevY = y;
-        nextX = x;
-        nextY = y;
 
         // basketball diameter 24.1 cm or 0.241 meters * 2 for better looks
         width = (short) (0.241 * 2 * ratioPXtoM);
@@ -89,9 +86,10 @@ public class Ball
 
 
         // Physics-related stuff:
-        GRAVITY = 9.8f * ratioPXtoM;
-        MAX_VELOCITY = 18 * ratioPXtoM; // also max pull | meters per second.
+        GRAVITY = 2 * 9.8f * ratioPXtoM; // TODO: why *2???
+        MAX_VELOCITY = 2 * 17 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
+
         howManyCols = 0;
         removeBall_time = 0;
 
@@ -162,48 +160,51 @@ public class Ball
 
 
 
-    public void didCollide(int groundHeight)
+    public void didCollide(short groundHeight)
     {
         // TODO : expect only one hit to work cuz only one colX/Y are recorded. * 2later: hmm... not sure 'bout that
 
         if (x + width >= screenX)  // ball touches the right of the screen.
         {
-            howManyCols++;
-
-            if (collision != 1)
+/*            if (collision != 1)
             {
+                howManyCols++;
+
                 collision = 1;
 
                 colX = x;
                 colY = y + height / 2f;
-            }
+            }*/
         }
 
 
-        else if (y + height >= screenY - groundHeight)  // ball touches ground.
+        else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
         {
-            howManyCols++;
+/*
 
             if (collision != 3)
             {
+                howManyCols++;
+
                 collision = 3;
 
                 colX = x;
                 colY = y + height / 2f;
             }
+*/
 
         }
 
-        else if (x /*- (prevX - x)  // nextX */ <= screenX / 4f)  // ball touches the left of the screen.
+        else if (x - (prevX - x)  <= 0)  // ball touches the left of the screen.
         {
-            howManyCols++;
-
             if (collision != 2)
             {
+                howManyCols++;
+
                 collision = 2;
 
-                velocityX *= percentOfPull * percentOfPull; // so for example 0.8 percent = 0.64
-                initialVelocityY *= percentOfPull;
+//                velocityX *= percentOfPull * percentOfPull; // so for example 0.8 percent = 0.64
+//                initialVelocityY *= percentOfPull;
 
 //                velocityX = (short) Math.abs(Math.cos(colAngle) * velocity);
 //                initialVelocityY = (short) Math.abs(Math.sin(colAngle) * velocity);
@@ -229,8 +230,6 @@ public class Ball
             else return 4;
     }
 
-
-    void calcNextPosition () {}
 
 
 
