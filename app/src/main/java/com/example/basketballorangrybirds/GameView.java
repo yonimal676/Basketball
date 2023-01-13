@@ -164,10 +164,11 @@ public class GameView extends SurfaceView implements Runnable
 
 
             //todo: remember that nextX/Y is a possibility!!!!!!!!!!!!!!!!!
+            // ask chatGPT how to
 
             ball.didCollide(ground.height);
 
-            ball.velocityY = (short) (ball.initialVelocityY - (ball.GRAVITY * ball.time));
+            ball.vy = (short) (ball.v0y - (ball.GRAVITY * ball.time));
 
             if (ball.collision == 0)
                 physicsUpdateNoCol();
@@ -190,21 +191,21 @@ public class GameView extends SurfaceView implements Runnable
     {
         if (quarterOfLaunch == 2)
         {
-            ball.velocityX = abs(ball.velocityX);
-            ball.velocityY = abs(ball.velocityY);
+            ball.vx = abs(ball.vx);
+            ball.vy = abs(ball.vy);
         } else {
-            ball.velocityY = quarterOfLaunch == 1 ? abs(ball.velocityY) : -1 * abs(ball.velocityY);
-            ball.velocityX = quarterOfLaunch == 3 ? abs(ball.velocityX) : -1 * abs(ball.velocityX);
+            ball.vy = quarterOfLaunch == 1 ? abs(ball.vy) : -1 * abs(ball.vy);
+            ball.vx = quarterOfLaunch == 3 ? abs(ball.vx) : -1 * abs(ball.vx);
         }
 
-        ball.x = ball.velocityX * ball.time + ball.initialX;
-        ball.y = ball.velocityY * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time) + ball.initialY;
+        ball.x = ball.vx * ball.time + ball.initialX;
+        ball.y = ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time) + ball.initialY;
 
         // Explanation: In previous attempts, I didn't change the velocities, but rather the way the ball moves,
-        // for example: ball.x = ball.initialX - ball.velocityX * ball.time;
+        // for example: ball.x = ball.initialX - ball.vx * ball.time;
         // Now this did work but I had to make 4 different cases for | -- | -+ | +- | ++ |
         // which is unreadable. Instead, I'll change the velocities according to where they should move towards.
-        // Discussion: physics #25 |
+        // Discussion: physics #25
     }
 
 
@@ -213,7 +214,6 @@ public class GameView extends SurfaceView implements Runnable
 
     public void physicsUpdate (byte col) // col -> collision number (type) | direction of the ball
     {
-
 /*
         ball.initialX = ball.colX;
         ball.initialY = ball.colY;
@@ -230,19 +230,18 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-                if (ball.colAngle == 0)
-                    ball.colAngle = abs(Math.atan(ball.prevY/ball.prevX));
+/*                if (ball.colAngle == 0)
+                    ball.colAngle = abs(Math.atan(ball.prevY/ball.prevX));*/
 //                    ball.colAngle =  (Math.atan2(abs(ball.prevY - ball.colY), abs(ball.prevX - ball.colX)));
 
 
-                ball.initialVelocityY = (short) abs(Math.sin(ball.colAngle) * ball.velocity);
-                ball.velocityY = (short) (ball.initialVelocityY - (ball.GRAVITY * ball.time));
-                ball.velocityX = (short) abs(Math.cos(ball.angle) * ball.velocity); // ✓
+//                ball.v0y = (short) abs(Math.sin(ball.colAngle) * ball.v);
+//                ball.vx = (short) abs(Math.cos(ball.angle) * ball.v); // ✓
 
+                ball.vx = -1 * abs(ball.vx);
 
-                ball.x = ball.velocityX * ball.time;
-                ball.y = (float) (ball.colY - 0.5 * (ball.initialVelocityY + ball.velocityY) * ball.time);
-
+                ball.x = ball.vx * ball.time;
+                ball.y = ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time) + ball.colY;
 
                 break;
 
@@ -275,7 +274,6 @@ public class GameView extends SurfaceView implements Runnable
                 for (short i = 0; i < ball.dotArrayListX.size() - 1; i++)
                     try{screenCanvas.drawPoint(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), paint1);}
                     catch (Exception ignored) {}
-
             // discussion: The Dots look disgusting #28
 
 
@@ -286,9 +284,9 @@ public class GameView extends SurfaceView implements Runnable
 
             if ( ! ball.thrown) // draw this line only before the ball is thrown.
             {
-                ball.velocity = 0;
-                ball.velocityX = 0;
-                ball.velocityY = 0;
+                ball.v = 0;
+                ball.vx = 0;
+                ball.vy = 0;
 
 
                 //discussion: X and Y of stop screenCanvas.DrawLine #15 | issue: correcting the line with the ball #13
@@ -449,11 +447,11 @@ public class GameView extends SurfaceView implements Runnable
 
                         ball.percentOfPull = ball.calcDistanceFromI(ball.x + fixX(), ball.y + fixY()) / ball.maxBallPull;
 
-                        ball.velocity = ball.percentOfPull * ball.MAX_VELOCITY;
+                        ball.v = ball.percentOfPull * ball.MAX_VELOCITY;
                         // Percent of pull * max velocity = percent of max velocity
 
-                        ball.velocityX = abs(Math.cos(ball.angle) * ball.velocity); // ✓
-                        ball.initialVelocityY = abs(Math.sin(ball.angle) * ball.velocity); // ✓
+                        ball.vx = abs(Math.cos(ball.angle) * ball.v); // ✓
+                        ball.v0y = abs(Math.sin(ball.angle) * ball.v); // ✓
                         // Both of these values never change after the ball is thrown.
 
 
@@ -464,7 +462,7 @@ public class GameView extends SurfaceView implements Runnable
                         ball.initialY = ball.y;
 
 
-                        ball.range = (float) ((ball.velocity * ball.velocity * Math.sin(2 * ball.angle) * Math.sin(2 * ball.angle))
+                        ball.range = (float) ((ball.v * ball.v * Math.sin(2 * ball.angle) * Math.sin(2 * ball.angle))
                                 / ball.GRAVITY / ball.ratioPXtoM);
 
 
@@ -525,9 +523,9 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawText("X: " + ball.x + fixX(), 75, 50, paint2);
             screenCanvas.drawText("Y: " + ball.y + fixY(), 75, 75, paint2);
             screenCanvas.drawText("Angle: " + (float) (180 / Math.PI * ball.angle), 75, 125, paint2);
-            screenCanvas.drawText("velocity: " + ball.velocity, 75, 175, paint2);
-            screenCanvas.drawText("velocityX: " + ball.velocityX, 75, 200, paint2);
-            screenCanvas.drawText("velocityY: " + ball.velocityY, 75, 225, paint2);
+            screenCanvas.drawText("velocity: " + ball.v, 75, 175, paint2);
+            screenCanvas.drawText("velocityX: " + ball.vx, 75, 200, paint2);
+            screenCanvas.drawText("velocityY: " + ball.vy, 75, 225, paint2);
             screenCanvas.drawText("HEIGHT: " + ball.HEIGHT, 75, 250, paint2);
             screenCanvas.drawText("quarter: " + ball.quarter, 75, 274, paint2);
             screenCanvas.drawText("Time: " + (int) game_time +"s", screenX - 200, 125, paint2);

@@ -31,7 +31,7 @@ public class Ball
 
 
     float removeBall_time;
-    float velocity, velocityX, velocityY, initialVelocityY; //VELOCITY
+    float v, vx, vy, v0y; // velocity, velocityX, velocityY, initialVelocityY
     float time;
     float range; // of projectile.
     float HEIGHT;
@@ -164,9 +164,9 @@ public class Ball
     {
         // TODO : expect only one hit to work cuz only one colX/Y are recorded. * 2later: hmm... not sure 'bout that
 
-        if (x + width >= screenX)  // ball touches the right of the screen.
+        if (x + width + (x - prevX) >= screenX)  // ball touches the right of the screen.
         {
-/*            if (collision != 1)
+           /* if (collision != 1)
             {
                 howManyCols++;
 
@@ -180,9 +180,8 @@ public class Ball
 
         else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
         {
-/*
 
-            if (collision != 3)
+            /*if (collision != 3)
             {
                 howManyCols++;
 
@@ -190,9 +189,7 @@ public class Ball
 
                 colX = x;
                 colY = y + height / 2f;
-            }
-*/
-
+            }*/
         }
 
         else if (x - (prevX - x)  <= 0)  // ball touches the left of the screen.
@@ -202,12 +199,6 @@ public class Ball
                 howManyCols++;
 
                 collision = 2;
-
-//                velocityX *= percentOfPull * percentOfPull; // so for example 0.8 percent = 0.64
-//                initialVelocityY *= percentOfPull;
-
-//                velocityX = (short) Math.abs(Math.cos(colAngle) * velocity);
-//                initialVelocityY = (short) Math.abs(Math.sin(colAngle) * velocity);
 
                 colX = x;
                 colY = y + height / 2f;
