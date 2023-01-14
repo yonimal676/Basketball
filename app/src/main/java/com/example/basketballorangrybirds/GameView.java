@@ -131,18 +131,16 @@ public class GameView extends SurfaceView implements Runnable
     {//discussion (bug fix): physics don't work when angle is -90 or 90 #29
 
 
-        if ( ! ball.thrown && ball.isTouched) // get quarter right before the ball is thrown.
-            quarterOfLaunch = ball.quarter; // discussion: From where has the ball been thrown? #24
-
-
 
 
         if (ball.thrown)
         {
-
             ball.prevX = ball.x;
             ball.prevY = ball.y; // for collision physics.
             // discussion: Changing Direction #34 || to prevent a bug (of dotArrayListX/Y) -> discussion: The Dots look disgusting #28
+
+
+            physicsUpdateNoCol();  // -> if collided will call physicsUpdate()
 
 
 /*            // determine the current quarter of the ball after launch. todo: I don't think this is necessary...
@@ -158,27 +156,15 @@ public class GameView extends SurfaceView implements Runnable
             // in case I want the height in meters; make the height logical and not technical.  todo: I don't think this is necessary...
 */
 
-            if (quarterOfLaunch == 1 || quarterOfLaunch == 2)
-                ball.GRAVITY = -1 * abs(ball.GRAVITY);// throwing the ball downwards.
-            else ball.GRAVITY = abs(ball.GRAVITY);
-
 
             //todo: remember that nextX/Y is a possibility!!!!!!!!!!!!!!!!!
             // ask chatGPT how to
 
-            ball.didCollide(ground.height);
-
-            ball.vy = (short) (ball.v0y - (ball.GRAVITY * ball.time));
-
-            if (ball.collision == 0)
-                physicsUpdateNoCol();
-            else
-                physicsUpdate(ball.collision);
-
-//            ball.didCollide(ground.height);//////////////////
-
-
         }
+
+        else if (ball.isTouched) // get quarter right before the ball is thrown.
+            quarterOfLaunch = ball.quarter; // discussion: From where has the ball been thrown? #24
+
 
 
         ball.dotArrayListX.add(ball.prevX + fixX()); // → ↓
@@ -189,65 +175,85 @@ public class GameView extends SurfaceView implements Runnable
 
     public void physicsUpdateNoCol()
     {
-        if (quarterOfLaunch == 2)
+/*        if (quarterOfLaunch == 1 || quarterOfLaunch == 2)
+            ball.GRAVITY = -1 * abs(ball.GRAVITY);// throwing the ball downwards.
+        else ball.GRAVITY = abs(ball.GRAVITY);*/
+
+
+
+        ball.vy = ball.v0y - (ball.GRAVITY * ball.time);  // the vertical velocity changes constantly.
+
+
+        ball.didCollide(ground.height);
+
+        if (ball.collision == 0)
         {
-            ball.vx = abs(ball.vx);
-            ball.vy = abs(ball.vy);
-        } else {
-            ball.vy = quarterOfLaunch == 1 ? abs(ball.vy) : -1 * abs(ball.vy);
-            ball.vx = quarterOfLaunch == 3 ? abs(ball.vx) : -1 * abs(ball.vx);
+            if (quarterOfLaunch == 2)
+            {
+                ball.vx = abs(ball.vx);
+                ball.vy = abs(ball.vy);
+            }
+            else {
+                ball.vy = quarterOfLaunch == 1 ? abs(ball.vy) : -1 * abs(ball.vy);
+                ball.vx = quarterOfLaunch == 3 ? abs(ball.vx) : -1 * abs(ball.vx);
+            } // =4 -> -1 * abs(ball.vy) && -1 * abs(ball.vx)
+
+
+            ball.x = ball.initialX + ball.vx * ball.time;
+//            ball.y = ball.initialY + 0.5f*(ball.v0y + ball.vy)*ball.time;
+            ball.y = ball.initialY + ball.vy*ball.time + (0.5f*ball.GRAVITY*ball.time*ball.time);
+
+
+
+            // Explanation: In previous attempts, I didn't change the velocities, but rather the way the ball moves,
+            // for example: ball.x = ball.initialX - ball.vx * ball.time;
+            // Now this did work but I had to make 4 different cases for | -- | -+ | +- | ++ |
+            // which is unreadable. Instead, I'll change the velocities according to where they should move towards.
+            // Discussion: physics #25
         }
 
-        ball.x = ball.vx * ball.time + ball.initialX;
-        ball.y = ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time) + ball.initialY;
 
-        // Explanation: In previous attempts, I didn't change the velocities, but rather the way the ball moves,
-        // for example: ball.x = ball.initialX - ball.vx * ball.time;
-        // Now this did work but I had to make 4 different cases for | -- | -+ | +- | ++ |
-        // which is unreadable. Instead, I'll change the velocities according to where they should move towards.
-        // Discussion: physics #25
+        else
+            physicsUpdate(ball.collision);
     }
 
 
 
-
-
-    public void physicsUpdate (byte col) // col -> collision number (type) | direction of the ball
+    public void physicsUpdate (byte col) // col -> collision number (type)
     {
-/*
-        ball.initialX = ball.colX;
-        ball.initialY = ball.colY;
-*/
-
 
         switch (col)
         {
-            case 1: break;
+            case 1:
+
+
+                ball.vx = -1 * abs(ball.vx);
+
+                ball.x = ball.vx * ball.time + screenX + (screenX - ball.orgIX);
+                ball.y = (ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) + ball.initialY;
+//                ball.y = 0.5f * (ball.v0y + ball.vy) * ball.time;
+
+                break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 2:
 
 
+                ball.vx = abs(ball.vx);
 
-/*                if (ball.colAngle == 0)
-                    ball.colAngle = abs(Math.atan(ball.prevY/ball.prevX));*/
-//                    ball.colAngle =  (Math.atan2(abs(ball.prevY - ball.colY), abs(ball.prevX - ball.colX)));
-
-
-//                ball.v0y = (short) abs(Math.sin(ball.colAngle) * ball.v);
-//                ball.vx = (short) abs(Math.cos(ball.angle) * ball.v); // ✓
-
-                ball.vx = -1 * abs(ball.vx);
-
-                ball.x = ball.vx * ball.time;
-                ball.y = ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time) + ball.colY;
-
+                ball.x = ball.vx * ball.time - screenX/* - (screenX - ball.orgIX)*/;
+                ball.y = (ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) + ball.initialY;
+//                ball.y = 0.5f * (ball.v0y + ball.vy) * ball.time;
                 break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            case 3: break;
+            case 3:
+
+                // TODO: ask chatGPT
+
+                break;
 
         }
 
@@ -331,13 +337,18 @@ public class GameView extends SurfaceView implements Runnable
 
     private void sleep() // discussion: Time updating #33 | byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 FPS)
     {
-        byte SLEEP_MILLIS = (byte) (1000 / 60f);// = 16.6666 -> 16
+        float SLEEP_MILLIS = (1000 / 60f);//
 
-        try { Thread.sleep(SLEEP_MILLIS); }
+        try { Thread.sleep((long) (SLEEP_MILLIS)); }
         catch (InterruptedException e) {e.printStackTrace();}
 
         //count time from throw:
-        ball.time = ball.thrown ? ball.time + SLEEP_MILLIS/1000f : 0;
+//        ball.time = ball.thrown ? ball.time + SLEEP_MILLIS/1000f : 0;
+        if(ball.thrown){
+            ball.time += SLEEP_MILLIS/1000f;
+        }else{
+            ball.time = 0;
+        }
 
         game_time += SLEEP_MILLIS / 1000f;
     }
@@ -495,6 +506,8 @@ public class GameView extends SurfaceView implements Runnable
         screenCanvas.drawLine(ball.prevX, ball.prevY + fixY(), ball.x, ball.y + fixY(), paint5);
 
         screenCanvas.drawLine(0, 0, 0, screenY, paint5);
+        screenCanvas.drawLine(screenX, 0, screenX, screenY, paint5);
+
 
         if (ball.collision != 0) {
             screenCanvas.drawPoint(ball.colX, ball.colY, paint6);
@@ -537,7 +550,6 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawText("colY: " + ball.colY, screenX / 2f - ball.width * 3, ball.height * 5, paint2);
 
             screenCanvas.drawText("colAngle!!!!: " + 180/Math.PI * ball.colAngle, screenX / 2f - ball.width * 3, ball.height * 6, paint2);
-            screenCanvas.drawText("direction: " + ball.detectDirection(), screenX / 2f - ball.width * 3, ball.height * 6.5f, paint2);
             screenCanvas.drawText("quarterOfLaunch: " + quarterOfLaunch, screenX / 2f - ball.width * 3, ball.height * 7, paint2);
 
 

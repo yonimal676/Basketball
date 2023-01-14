@@ -86,8 +86,8 @@ public class Ball
 
 
         // Physics-related stuff:
-        GRAVITY = 2 * 9.8f * ratioPXtoM; // TODO: why *2???
-        MAX_VELOCITY = 2 * 17 * ratioPXtoM; // also max pull | meters per second.
+        GRAVITY = /*-1     *     */ 9.8f * ratioPXtoM; // TODO: why *2???
+        MAX_VELOCITY = 17 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
         howManyCols = 0;
@@ -166,22 +166,25 @@ public class Ball
 
         if (x + width + (x - prevX) >= screenX)  // ball touches the right of the screen.
         {
-           /* if (collision != 1)
+            if (collision != 1)
             {
+                vx *= percentOfPull;
+                vy *= percentOfPull;
+
                 howManyCols++;
 
                 collision = 1;
 
                 colX = x;
                 colY = y + height / 2f;
-            }*/
+            }
         }
 
 
         else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
         {
 
-            /*if (collision != 3)
+            if (collision != 3)
             {
                 howManyCols++;
 
@@ -189,13 +192,17 @@ public class Ball
 
                 colX = x;
                 colY = y + height / 2f;
-            }*/
+            }
         }
 
         else if (x - (prevX - x)  <= 0)  // ball touches the left of the screen.
         {
             if (collision != 2)
             {
+                vx *= percentOfPull;
+                vy *= percentOfPull;
+
+
                 howManyCols++;
 
                 collision = 2;
@@ -209,18 +216,6 @@ public class Ball
         else if (howManyCols == 0)
             collision = 0; // no collision.
     }
-
-
-    byte detectDirection ()
-    {
-        if (prevX >= x) // left
-            if (prevY >= y) return 2; // up
-            else return 3;
-        else
-            if (prevY >= y) return 1; // up
-            else return 4;
-    }
-
 
 
 
