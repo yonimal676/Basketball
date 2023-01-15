@@ -87,7 +87,7 @@ public class Ball
 
         // Physics-related stuff:
         GRAVITY = /*-1     *     */ 9.8f * ratioPXtoM; // TODO: why *2???
-        MAX_VELOCITY = 21 * ratioPXtoM; // also max pull | meters per second.
+        MAX_VELOCITY = 24 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
         howManyCols = 0;
@@ -175,7 +175,7 @@ public class Ball
 
                 collision = 1;
 
-                colX = x;
+                colX = x + width;
                 colY = y + height / 2f;
             }
         }

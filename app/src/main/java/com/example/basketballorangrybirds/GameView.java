@@ -206,10 +206,8 @@ public class GameView extends SurfaceView implements Runnable
             } // =4 -> -1 * abs(ball.vy) && -1 * abs(ball.vx)
 
 
-            ball.x = ball.initialX + (ball.vx * ball.time);
-//            ball.y = ball.initialY + 0.5f*(ball.v0y + ball.vy)*ball.time;
-            ball.y = ball.initialY + (ball.vy*ball.time + (0.5f * ball.GRAVITY*ball.time*ball.time));
-
+            ball.x = ball.initialX + ball.vx * ball.time;
+            ball.y = ball.initialY + ball.vy*ball.time + (0.5f*ball.GRAVITY*ball.time*ball.time);
 
 
             // Explanation: In previous attempts, I didn't change the velocities, but rather the way the ball moves,
@@ -233,12 +231,11 @@ public class GameView extends SurfaceView implements Runnable
         {
             case 1:
 
-
                 ball.vx = -1 * abs(ball.vx);
 
-                ball.x = ball.vx * ball.time + screenX + (screenX - ball.orgIX + ball.width);
-                ball.y = ball.initialY - (ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) ;
-//                ball.y = 0.5f * (ball.v0y + ball.vy) * ball.time;
+                ball.x = ball.vx * ball.time + (screenX + (screenX - ball.orgIX) + ball.width);
+                ball.y = (-ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) + (ball.orgIY - ball.colY +ball.colY + fixY());
+                ball.didCollide(ground.height);
 
                 break;
 
@@ -246,12 +243,12 @@ public class GameView extends SurfaceView implements Runnable
 
             case 2:
 
-
                 ball.vx = abs(ball.vx);
 
-                ball.x = ball.vx * ball.time - screenX;
-                ball.y = (ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) - screenY + (screenY - ball.colY);
-//                ball.y = 0.5f * (ball.v0y + ball.vy) * ball.time;
+                ball.x = ball.vx * ball.time - (2*screenX - ball.initialX);
+//                ball.y = 0.5f * (ball.v0y - ball.vy) * ball.time;
+                ball.y = -ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time) + ball.orgIY + fixY();
+                ball.didCollide(ground.height);
 
                 break;
 
