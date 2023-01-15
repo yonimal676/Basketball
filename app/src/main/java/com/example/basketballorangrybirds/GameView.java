@@ -108,7 +108,7 @@ public class GameView extends SurfaceView implements Runnable
 
         showAxis = BitmapFactory.decodeResource(getResources(), R.drawable.play_btn);
         showAxis = Bitmap.createScaledBitmap(showAxis, ball.width * 3, ball.height * 3, false);
-        showAxisBool = 1;
+        showAxisBool = 0;
 
     }
 
@@ -175,13 +175,20 @@ public class GameView extends SurfaceView implements Runnable
 
     public void physicsUpdateNoCol()
     {
-/*        if (quarterOfLaunch == 1 || quarterOfLaunch == 2)
+/*;
+        if (quarterOfLaunch == 1 || quarterOfLaunch == 2)
             ball.GRAVITY = -1 * abs(ball.GRAVITY);// throwing the ball downwards.
-        else ball.GRAVITY = abs(ball.GRAVITY);*/
+        else ball.GRAVITY = abs(ball.GRAVITY);
+*/
 
 
 
         ball.vy = ball.v0y - (ball.GRAVITY * ball.time);  // the vertical velocity changes constantly.
+//        ball.vy = (float) Math.sqrt(ball.v0y * ball.v0y + 2*ball.GRAVITY*(ball.y-ball.initialY));
+
+//        ball.vy = (float) (ball.v0y + (ball.GRAVITY * ball.time) * Math.sin(ball.angle));  // Always works for pre-hit
+
+
 
 
         ball.didCollide(ground.height);
@@ -199,9 +206,9 @@ public class GameView extends SurfaceView implements Runnable
             } // =4 -> -1 * abs(ball.vy) && -1 * abs(ball.vx)
 
 
-            ball.x = ball.initialX + ball.vx * ball.time;
+            ball.x = ball.initialX + (ball.vx * ball.time);
 //            ball.y = ball.initialY + 0.5f*(ball.v0y + ball.vy)*ball.time;
-            ball.y = ball.initialY + ball.vy*ball.time + (0.5f*ball.GRAVITY*ball.time*ball.time);
+            ball.y = ball.initialY + (ball.vy*ball.time + (0.5f * ball.GRAVITY*ball.time*ball.time));
 
 
 
@@ -229,8 +236,8 @@ public class GameView extends SurfaceView implements Runnable
 
                 ball.vx = -1 * abs(ball.vx);
 
-                ball.x = ball.vx * ball.time + screenX + (screenX - ball.orgIX);
-                ball.y = (ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) + ball.initialY;
+                ball.x = ball.vx * ball.time + screenX + (screenX - ball.orgIX + ball.width);
+                ball.y = ball.initialY - (ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) ;
 //                ball.y = 0.5f * (ball.v0y + ball.vy) * ball.time;
 
                 break;
@@ -242,9 +249,10 @@ public class GameView extends SurfaceView implements Runnable
 
                 ball.vx = abs(ball.vx);
 
-                ball.x = ball.vx * ball.time - screenX/* - (screenX - ball.orgIX)*/;
-                ball.y = (ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) + ball.initialY;
+                ball.x = ball.vx * ball.time - screenX;
+                ball.y = (ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) - screenY + (screenY - ball.colY);
 //                ball.y = 0.5f * (ball.v0y + ball.vy) * ball.time;
+
                 break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,7 +345,7 @@ public class GameView extends SurfaceView implements Runnable
 
     private void sleep() // discussion: Time updating #33 | byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 FPS)
     {
-        float SLEEP_MILLIS = (1000 / 60f);//
+        float SLEEP_MILLIS = 1000/100f;//
 
         try { Thread.sleep((long) (SLEEP_MILLIS)); }
         catch (InterruptedException e) {e.printStackTrace();}
@@ -345,12 +353,12 @@ public class GameView extends SurfaceView implements Runnable
         //count time from throw:
 //        ball.time = ball.thrown ? ball.time + SLEEP_MILLIS/1000f : 0;
         if(ball.thrown){
-            ball.time += SLEEP_MILLIS/1000f;
+            ball.time += SLEEP_MILLIS / 1000 * 2.2;  // = 0.022 -> cuz it looks good
         }else{
             ball.time = 0;
         }
 
-        game_time += SLEEP_MILLIS / 1000f;
+        game_time += SLEEP_MILLIS / 1000;  // = 0.01
     }
 
 

@@ -87,7 +87,7 @@ public class Ball
 
         // Physics-related stuff:
         GRAVITY = /*-1     *     */ 9.8f * ratioPXtoM; // TODO: why *2???
-        MAX_VELOCITY = 17 * ratioPXtoM; // also max pull | meters per second.
+        MAX_VELOCITY = 21 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
         howManyCols = 0;
@@ -182,7 +182,7 @@ public class Ball
 
 
         else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
-        {
+        {/*
 
             if (collision != 3)
             {
@@ -192,7 +192,7 @@ public class Ball
 
                 colX = x;
                 colY = y + height / 2f;
-            }
+            }*/
         }
 
         else if (x - (prevX - x)  <= 0)  // ball touches the left of the screen.
