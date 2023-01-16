@@ -3,7 +3,6 @@ package com.example.basketballorangrybirds;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
 
 public class Ground
 {
@@ -32,10 +31,6 @@ public class Ground
         groundBitmap = Bitmap.createScaledBitmap(groundBitmap, width, height, false);
 
 
-    }
-
-
-    Rect getRektLol () {return new Rect((int) x,(int) y, (int) (x + width), (int) (y + height));}
-    //(⌐■_■)✧
+    }//(⌐■_■)✧
 
 }

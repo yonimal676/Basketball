@@ -160,61 +160,72 @@ public class Ball
 
 
 
-    public void didCollide(short groundHeight)
+    public byte didCollide(short groundHeight)
     {
-        // TODO : expect only one hit to work cuz only one colX/Y are recorded. * 2later: hmm... not sure 'bout that
-
-        if (x + width + (x - prevX) >= screenX)  // ball touches the right of the screen.
+        if (x + width + (x - prevX) >= screenX && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
         {
             if (collision != 1)
             {
+                howManyCols++;
+
+                colX = x;
+                colY = y + height / 2f;
+
                 vx *= percentOfPull;
                 vy *= percentOfPull;
 
-                howManyCols++;
+                vx = -1 * Math.abs(vx);
 
-                collision = 1;
-
-                colX = x + width;
-                colY = y + height / 2f;
+                return collision = 1;
             }
         }
 
 
         else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
-        {/*
+        {
 
             if (collision != 3)
             {
                 howManyCols++;
 
-                collision = 3;
-
                 colX = x;
-                colY = y + height / 2f;
-            }*/
-        }
+                colY = y + height;
 
-        else if (x - (prevX - x)  <= 0)  // ball touches the left of the screen.
-        {
-            if (collision != 2)
-            {
+
                 vx *= percentOfPull;
                 vy *= percentOfPull;
 
+                vy = -0.5f * Math.abs(vy);
 
+
+                return collision = 3;
+            }
+        }
+
+        else if (x <= 0/*50*/ && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the left of the screen.
+        {
+            if (collision != 2)
+            {
                 howManyCols++;
-
-                collision = 2;
 
                 colX = x;
                 colY = y + height / 2f;
+
+                vx *= percentOfPull;
+                vy *= percentOfPull;
+
+                vx = Math.abs(vx);
+
+                return collision = 2;
+
             }
         }
 
 
         else if (howManyCols == 0)
-            collision = 0; // no collision.
+            return collision = 0; // no collision.
+
+        return collision;
     }
 
 

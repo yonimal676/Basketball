@@ -103,7 +103,7 @@ public class GameView extends SurfaceView implements Runnable
         paint6 = new Paint();
         paint6.setColor(Color.RED);
         paint6.setStyle(Paint.Style.FILL);
-        paint6.setStrokeWidth(6f);
+        paint6.setStrokeWidth(4f);
 
 
         showAxis = BitmapFactory.decodeResource(getResources(), R.drawable.play_btn);
@@ -132,17 +132,13 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-
         if (ball.thrown)
         {
             ball.prevX = ball.x;
             ball.prevY = ball.y; // for collision physics.
             // discussion: Changing Direction #34 || to prevent a bug (of dotArrayListX/Y) -> discussion: The Dots look disgusting #28
 
-
-            physicsUpdateNoCol();  // -> if collided will call physicsUpdate()
-
-
+            physicsUpdateNoCol(ball.time);  // -> if collided will call physicsUpdate()
 /*            // determine the current quarter of the ball after launch. todo: I don't think this is necessary...
             if (ball.x >= ball.orgIX) // right side:
                 if (ball.y < ball.orgIY) ball.quarter = 1;// -top.
@@ -154,17 +150,15 @@ public class GameView extends SurfaceView implements Runnable
             if (ball.y > screenY) ball.HEIGHT =  -1 * abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
             else ball.HEIGHT = abs(screenY - (ball.height / 2f + ball.y)) / ball.ratioPXtoM; // ✓
             // in case I want the height in meters; make the height logical and not technical.  todo: I don't think this is necessary...
-*/
+
 
 
             //todo: remember that nextX/Y is a possibility!!!!!!!!!!!!!!!!!
-            // ask chatGPT how to
-
+            // ask chatGPT how to*/
         }
 
         else if (ball.isTouched) // get quarter right before the ball is thrown.
             quarterOfLaunch = ball.quarter; // discussion: From where has the ball been thrown? #24
-
 
 
         ball.dotArrayListX.add(ball.prevX + fixX()); // → ↓
@@ -173,27 +167,13 @@ public class GameView extends SurfaceView implements Runnable
     }/* UPDATE */
 
 
-    public void physicsUpdateNoCol()
+    public void physicsUpdateNoCol(float time) // issue: physics #25
     {
-/*;
-        if (quarterOfLaunch == 1 || quarterOfLaunch == 2)
-            ball.GRAVITY = -1 * abs(ball.GRAVITY);// throwing the ball downwards.
-        else ball.GRAVITY = abs(ball.GRAVITY);
-*/
+
+        ball.vy = ball.v0y - (ball.GRAVITY * time);  // the vertical velocity changes constantly.
 
 
-
-        ball.vy = ball.v0y - (ball.GRAVITY * ball.time);  // the vertical velocity changes constantly.
-//        ball.vy = (float) Math.sqrt(ball.v0y * ball.v0y + 2*ball.GRAVITY*(ball.y-ball.initialY));
-
-//        ball.vy = (float) (ball.v0y + (ball.GRAVITY * ball.time) * Math.sin(ball.angle));  // Always works for pre-hit
-
-
-
-
-        ball.didCollide(ground.height);
-
-        if (ball.collision == 0)
+        if (ball.didCollide(ground.height) == 0)
         {
             if (quarterOfLaunch == 2)
             {
@@ -206,12 +186,12 @@ public class GameView extends SurfaceView implements Runnable
             } // =4 -> -1 * abs(ball.vy) && -1 * abs(ball.vx)
 
 
-            ball.x = ball.initialX + ball.vx * ball.time;
-            ball.y = ball.initialY + ball.vy*ball.time + (0.5f*ball.GRAVITY*ball.time*ball.time);
+            ball.x = ball.initialX + ball.vx * time;
+            ball.y = ball.initialY + ball.vy*time + (0.5f*ball.GRAVITY*time*time);
 
 
             // Explanation: In previous attempts, I didn't change the velocities, but rather the way the ball moves,
-            // for example: ball.x = ball.initialX - ball.vx * ball.time;
+            // for example: ball.x = ball.initialX - ball.vx * time;
             // Now this did work but I had to make 4 different cases for | -- | -+ | +- | ++ |
             // which is unreadable. Instead, I'll change the velocities according to where they should move towards.
             // Discussion: physics #25
@@ -219,44 +199,39 @@ public class GameView extends SurfaceView implements Runnable
 
 
         else
-            physicsUpdate(ball.collision);
+            physicsUpdate(ball.collision, time); // discussion: Changing Direction #34 | issue: Collision Physics #26
     }
 
 
 
-    public void physicsUpdate (byte col) // col -> collision number (type)
+    public void physicsUpdate (byte col, float time) // col -> collision number (type)
     {
+        /*
+        ball.initialX = colX;
+        ball.initialY = colY;
+        */
 
         switch (col)
         {
             case 1:
-
-                ball.vx = -1 * abs(ball.vx);
-
-                ball.x = ball.vx * ball.time + (screenX + (screenX - ball.orgIX) + ball.width);
-                ball.y = (-ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time)) + (ball.orgIY - ball.colY +ball.colY + fixY());
-                ball.didCollide(ground.height);
-
+                ball.x = ball.vx * time + (screenX + (screenX - ball.initialX)) + (ball.colX - screenX);
+                ball.y = (-ball.vy * time + (0.5f * ball.GRAVITY * time * time)) + (ball.initialY);
                 break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 2:
-
-                ball.vx = abs(ball.vx);
-
-                ball.x = ball.vx * ball.time - (2*screenX - ball.initialX);
-//                ball.y = 0.5f * (ball.v0y - ball.vy) * ball.time;
-                ball.y = -ball.vy * ball.time + (0.5f * ball.GRAVITY * ball.time * ball.time) + ball.orgIY + fixY();
-                ball.didCollide(ground.height);
-
+                ball.x = ball.vx * time - (2*screenX - ball.initialX);
+                ball.y = -ball.vy * time + (0.5f * ball.GRAVITY * time * time) + ball.initialY - fixY();
                 break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 3:
 
-                // TODO: ask chatGPT
+                ball.x = ball.vx * time + ball.colX;
+                ball.y = -ball.vy * time + (0.5f * ball.GRAVITY * time * time) + 2*screenY - ball.initialY;
+
 
                 break;
 
@@ -273,7 +248,12 @@ public class GameView extends SurfaceView implements Runnable
 
             // KEEP IN MIND THAT THE ORDER MATTERS. ↓
 
-            screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint1);//background
+            if (showAxisBool == 0)
+                screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint1);//background
+            else
+                screenCanvas.drawBitmap(background.devBackgroundBitmap, 0, 0, paint1);//background
+
+
             screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);//ball
             screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
 
@@ -283,7 +263,7 @@ public class GameView extends SurfaceView implements Runnable
 
             if (ball.time > 0.032)
                 for (short i = 0; i < ball.dotArrayListX.size() - 1; i++)
-                    try{screenCanvas.drawPoint(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), paint1);}
+                    try{screenCanvas.drawPoint(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), paint6);}
                     catch (Exception ignored) {}
             // discussion: The Dots look disgusting #28
 
@@ -342,7 +322,7 @@ public class GameView extends SurfaceView implements Runnable
 
     private void sleep() // discussion: Time updating #33 | byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 FPS)
     {
-        float SLEEP_MILLIS = 1000/100f;//
+        float SLEEP_MILLIS = 1000/120f;//
 
         try { Thread.sleep((long) (SLEEP_MILLIS)); }
         catch (InterruptedException e) {e.printStackTrace();}
@@ -384,7 +364,9 @@ public class GameView extends SurfaceView implements Runnable
                         && event.getRawY() >= 0 && event.getRawY() <= ball.height * 3)
 
                     showAxisBool = (byte) ((showAxisBool == 0) ? 1 : 0);
-                // turn on or off the dev mode.
+
+
+                // turn dev mode on or off.
 
                 break;
 
@@ -508,18 +490,20 @@ public class GameView extends SurfaceView implements Runnable
     public void showStats (Canvas screenCanvas)
     {
 
-        screenCanvas.drawLine(ball.prevX, ball.prevY + fixY(), ball.x, ball.y + fixY(), paint5);
+/*        screenCanvas.drawLine(0, 0, 0, screenY, paint5);
+        screenCanvas.drawLine(screenX, 0, screenX, screenY, paint5);*/
 
-        screenCanvas.drawLine(0, 0, 0, screenY, paint5);
-        screenCanvas.drawLine(screenX, 0, screenX, screenY, paint5);
-
-
-        if (ball.collision != 0) {
+/*        if (ball.collision != 0) {
             screenCanvas.drawPoint(ball.colX, ball.colY, paint6);
             screenCanvas.drawLine(ball.colX, ball.colY, ball.x + fixX(), ball.y + fixY(), paint5);
-        }
+        }*/
 
-        if (showAxisBool == 1) {
+        if (showAxisBool == 1)
+        {
+
+            if (ball.thrown)
+                screenCanvas.drawLine(ball.prevX, ball.prevY + fixY(), ball.x, ball.y + fixY(), paint5);
+
 //              SHOW AXIS:
             screenCanvas.drawLine(0, ball.orgIY, screenX, ball.orgIY, paint2);
             screenCanvas.drawLine(ball.orgIX, 0, ball.orgIX, screenY, paint2);
