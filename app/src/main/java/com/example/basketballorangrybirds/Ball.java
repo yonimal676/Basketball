@@ -43,6 +43,7 @@ public class Ball
 
     byte collision; // 0 = no collision, 1 = right wall, 2 = left wall, 3 = ground.
     byte howManyCols;
+    byte floorHitCount;
     // discussion: Changing Direction #34 -> number 1.
 
     ArrayList<Float> dotArrayListX;
@@ -91,6 +92,7 @@ public class Ball
         time = 0;
 
         howManyCols = 0;
+        floorHitCount = 0;
         removeBall_time = 0;
 
         collision = 0; // = no collision.
@@ -140,6 +142,7 @@ public class Ball
 
         colAngle = 0;
         howManyCols = 0;
+        floorHitCount = 0;
 
         initialX = orgIX;
         initialY = orgIY;
@@ -162,7 +165,7 @@ public class Ball
 
     public byte didCollide(short groundHeight)
     {
-        if (x + width + (x - prevX) >= screenX && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
+        if (x + width + (x - prevX) >= screenX + 100 && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
         {
             if (collision != 1)
             {
@@ -180,29 +183,7 @@ public class Ball
             }
         }
 
-
-        else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
-        {
-
-            if (collision != 3)
-            {
-                howManyCols++;
-
-                colX = x;
-                colY = y + height;
-
-
-                vx *= percentOfPull;
-                vy *= percentOfPull;
-
-                vy = -0.5f * Math.abs(vy);
-
-
-                return collision = 3;
-            }
-        }
-
-        else if (x <= 0/*50*/ && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the left of the screen.
+        else if (x - (prevX - x) <= 50 && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the left of the screen.
         {
             if (collision != 2)
             {
@@ -218,6 +199,29 @@ public class Ball
 
                 return collision = 2;
 
+            }
+        }
+
+
+
+        else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
+        {
+
+            if (collision / 10 != 3)
+            {
+                howManyCols++;
+                floorHitCount++;
+
+                colX = x;
+                colY = y + height;
+
+                vx *= percentOfPull;
+                vy *= percentOfPull;
+
+                for(int i = 1; i <= floorHitCount; i++)
+                    vy = -0.5f * Math.abs(vy);
+
+                return collision = (byte) (3 * 10 + floorHitCount);
             }
         }
 
