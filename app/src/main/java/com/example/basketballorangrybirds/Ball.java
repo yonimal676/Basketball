@@ -87,7 +87,7 @@ public class Ball
 
 
         // Physics-related stuff:
-        GRAVITY = /*-1     *     */ 9.8f * ratioPXtoM; // TODO: why *2???
+        GRAVITY = 9.8f * ratioPXtoM; // should be negative due to the earth's gravity pulling it downwards.
         MAX_VELOCITY = 24 * ratioPXtoM; // also max pull | meters per second.
         time = 0;
 
@@ -165,7 +165,7 @@ public class Ball
 
     public byte didCollide(short groundHeight)
     {
-        if (x + width + (x - prevX) >= screenX + 100 && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
+        if (x + width + (x - prevX) >= screenX && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
         {
             if (collision != 1)
             {
@@ -183,7 +183,7 @@ public class Ball
             }
         }
 
-        else if (x - (prevX - x) <= 50 && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the left of the screen.
+        else if (x - (prevX - x) <= 0 && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the left of the screen.
         {
             if (collision != 2)
             {
