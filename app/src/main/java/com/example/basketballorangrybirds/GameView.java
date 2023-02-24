@@ -153,10 +153,7 @@ public class GameView extends SurfaceView implements Runnable
     public void physicsUpdateNoCol () // issue: physics #25
     {
 
-        ball.vy = ball.v0y + ball.GRAVITY * ball.time;
-
-
-        if (ball.didCollide(ground.height) == 0)
+        if (ball.didCollide(ground.height) == 0) // if did not collide
         {
             if (quarterOfLaunch == 2)
             {
@@ -168,9 +165,12 @@ public class GameView extends SurfaceView implements Runnable
                 ball.vx = quarterOfLaunch == 3  ?  abs(ball.vx) : -1 * abs(ball.vx);
             } // =4 -> -1 * abs(ball.vy) && -1 * abs(ball.vx)
 
+            ball.vy = ball.v0y - ball.GRAVITY * ball.time;
 
-            ball.x = ball.initialX + ball.vx * ball.time;
-            ball.y = ball.initialY + ball.vy * ball.time + 0.5f * ball.GRAVITY * ball.time * ball.time;
+
+            ball.x = ball.initialX + ball.vx * ball.time; // Vx * t
+            ball.y = ball.initialY + ball.vy * ball.time + ball.GRAVITY * ball.time * ball.time / 2; // h + Vy * t - g * t² / 2
+
 
             // Explanation: In previous attempts, I didn't change the velocities, but rather the way the ball moves,
             // for example: ball.x = ball.initialX - ball.vx * time;
@@ -188,36 +188,30 @@ public class GameView extends SurfaceView implements Runnable
 
     public void physicsUpdate (byte col, float time) // col -> collision number (type)
     {
-        /*
-        ball.initialX = colX;
-        ball.initialY = colY;
-        */
 
         switch (col)
         {
             case 1: // right wall
-                ball.x = ball.vx * time + (screenX + (screenX - ball.initialX)) + (ball.colX - screenX - ball.width);
-                ball.y = ball.vy * time + (0.5f * ball.GRAVITY * time * time) + (ball.initialY);
+                ball.x = ball.vx * time + (screenX  - ball.initialX + ball.colX);
+                ball.y = ball.vy * time - ball.GRAVITY * time * time / 2 + (ball.initialY - abs(ball.prevY - ball.y) - fixY());
                 break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 2: // left wall
                 ball.x = ball.vx * time - ( 2 * screenX - ball.initialX + fixX());
-                ball.y = ball.vy * time + (0.5f * ball.GRAVITY * time * time) + ball.initialY;
+                ball.y = ball.vy * time - ball.GRAVITY * time * time / 2 + screenY - ball.initialY;
                 break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 3: // floor
-
                 ball.x = ball.vx * time + ( ball.colX - fixX());
-                ball.y = ball.vy * time + (0.5f * ball.GRAVITY * time * time) + (ball.colY+ball.height+ground.height+abs(ball.initialY - ball.orgIY));
+                ball.y = ball.vy * time - ball.GRAVITY * time * time / 2 + (ball.colY+ball.height+ground.height+abs(ball.initialY - ball.orgIY));
                 break;
 
         }
 
-        ball.didCollide(ground.height);
 
     }
 
@@ -248,9 +242,6 @@ public class GameView extends SurfaceView implements Runnable
                     try{screenCanvas.drawCircle(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), ball.width/20f, paint3/*path_paint*/);}
                     catch (Exception ignored) {}
             // discussion: The Dots look disgusting #28
-
-
-
 
 
 
@@ -304,15 +295,15 @@ public class GameView extends SurfaceView implements Runnable
 
     private void sleep() // discussion: Time updating #33 | byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 FPS)
     {
-        float SLEEP_MILLIS = 1000/200f;//
+        float SLEEP_MILLIS = 1000/60f;//
 
-        try { Thread.sleep((long) (SLEEP_MILLIS)); }
+        try { Thread.sleep((long) (SLEEP_MILLIS / 2)); }
         catch (InterruptedException e) {e.printStackTrace();}
 
         //count time from throw:
 //        ball.time = ball.thrown ? ball.time + SLEEP_MILLIS/1000f : 0;
         if (ball.thrown)
-            ball.time += SLEEP_MILLIS / 1000 * 2.2;  // = 0.022 -> cuz it looks good
+            ball.time += SLEEP_MILLIS / 1000;  // = 0.022 -> cuz it looks good
         else
             ball.time = 0;
 
@@ -379,8 +370,6 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-
-
                     if (ball.calcDistanceFromI(event.getX(), event.getY()) < ball.maxBallPull) // if in drag-able circle
                         ball.setPosition(event.getX(), event.getY());                         // than drag normally.
 
@@ -430,12 +419,12 @@ public class GameView extends SurfaceView implements Runnable
                         ball.v = ball.percentOfPull * ball.MAX_VELOCITY;
                         // Percent of pull * max velocity = percent of max velocity
 
-                        ball.vx = abs(Math.cos(ball.angle) * ball.v); // ✓
+                        ball.vx = abs(Math.cos(ball.angle) * ball.v);
 
                         if (quarterOfLaunch == 1 || quarterOfLaunch == 2)
-                            ball.v0y = abs(Math.sin(ball.angle) * ball.v); // ✓
+                            ball.v0y = abs(Math.sin(ball.angle) * ball.v);
                         else
-                            ball.v0y = - abs(Math.sin(ball.angle) * ball.v); // ✓
+                            ball.v0y = -1 * abs(Math.sin(ball.angle) * ball.v);
                         // Both of these values never change after the ball is thrown.
 
                         ball.orgIX = ball.initialX;
@@ -443,17 +432,13 @@ public class GameView extends SurfaceView implements Runnable
 
                         ball.initialX = ball.x;
                         ball.initialY = ball.y;
-
                     }
 
                 }
-
                 ball.isTouched = false;
 
                 break;
-
         }
-
         return true;
     }
 
@@ -511,28 +496,23 @@ public class GameView extends SurfaceView implements Runnable
 
             screenCanvas.drawText("X: " + ball.x + fixX(), 75, 50, paint2);
             screenCanvas.drawText("Y: " + ball.y + fixY(), 75, 75, paint2);
-            screenCanvas.drawText("Angle: " + (float) (180 / Math.PI * ball.angle), 75, 125, paint2);
-            screenCanvas.drawText("velocity: " + ball.v, 75, 175, paint2);
-            screenCanvas.drawText("velocityX: " + ball.vx, 75, 200, paint2);
-            screenCanvas.drawText("velocityY: " + ball.vy, 75, 225, paint2);
-            screenCanvas.drawText("HEIGHT: " + ball.HEIGHT, 75, 250, paint2);
-            screenCanvas.drawText("quarter: " + ball.quarter, 75, 274, paint2);
-            screenCanvas.drawText("Time: " + (int) game_time +"s", screenX - 200, 125, paint2);
-            screenCanvas.drawText("range: " + ball.range, 75, 300, paint2);
 
+            screenCanvas.drawText("Angle: ∠ " + (float) (180 / Math.PI * ball.angle) + "°", 75, 110, paint2);
+            screenCanvas.drawText("velocity (m/s): " + ball.v / ball.ratioMtoPX, 75, 130, paint2);
+            screenCanvas.drawText("velocityX (m/s): " + ball.vx / ball.ratioMtoPX, 75, 150, paint2);
+            screenCanvas.drawText("velocityY (m/s): " + ball.vy / ball.ratioMtoPX, 75, 170, paint2);
+            screenCanvas.drawText("v0y: " + ball.v0y, 75, 210, paint2);
 
-            screenCanvas.drawText("collided: " + ball.collision, screenX / 2f - ball.width * 3, ball.height * 4, paint2);
-            screenCanvas.drawText("colX: " + ball.colX, screenX / 2f - ball.width * 3, ball.height * 4.5f, paint2);
-            screenCanvas.drawText("colY: " + ball.colY, screenX / 2f - ball.width * 3, ball.height * 5, paint2);
+            screenCanvas.drawText("collided: " + ball.collision, screenX / 2f - ball.width * 3, ball.height * 3 + 50, paint2);
+            screenCanvas.drawText("colX: " + ball.colX, screenX / 2f - ball.width * 3, ball.height * 3 + 70, paint2);
+            screenCanvas.drawText("colY: " + ball.colY, screenX / 2f - ball.width * 3, ball.height * 3 + 90, paint2);
 
+            screenCanvas.drawText("quarterOfLaunch: " + quarterOfLaunch, screenX / 2f - ball.width * 3, ball.height * 3 + 110, paint2);
+            screenCanvas.drawText("range: " + ball.range, screenX / 2f - ball.width * 3, ball.height * 3 + 130, paint2);
+            screenCanvas.drawText("HEIGHT: " + ball.HEIGHT, screenX / 2f - ball.width * 3, ball.height * 3 + 150, paint2);
 
-            screenCanvas.drawText("velocityY: " + ball.v0y, screenX / 2f, screenY / 2f, paint2);
+            screenCanvas.drawText("Time: " + (int) game_time +"s", screenX / 2f + ball.width * 3, 50, paint2);
 
-
-
-
-            screenCanvas.drawText("colAngle!!!!: " + 180/Math.PI * ball.colAngle, screenX / 2f - ball.width * 3, ball.height * 6, paint2);
-            screenCanvas.drawText("quarterOfLaunch: " + quarterOfLaunch, screenX / 2f - ball.width * 3, ball.height * 7, paint2);
 
 
 

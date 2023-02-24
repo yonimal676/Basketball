@@ -10,6 +10,8 @@ import java.util.ArrayList;
 
 public class Ball
 {
+
+
     float orgIX, orgIY; // experimental.
     float percentOfPull;
     short maxBallPull;         // radius of the circle which determines max dist. ball from initial point
@@ -21,7 +23,6 @@ public class Ball
 
     float prevX, prevY;
     float colX, colY; // collision x, y coordinates.
-    float colAngle; // collision angle.
 
 
     float initialX, initialY;  // acts as the (0,0) point relative to the ball.
@@ -39,7 +40,7 @@ public class Ball
 
     final float MAX_VELOCITY; //meters per second.
     float GRAVITY;
-    final float ratioPXtoM ; // discussion: Pixels to centimeters #19 || x pixels to meters.
+    final float ratioMtoPX; // discussion: Pixels to centimeters #19 || x pixels to meters.
 
     byte collision; // 0 = no collision, 1 = right wall, 2 = left wall, 3 = ground.
     byte howManyCols;
@@ -57,10 +58,10 @@ public class Ball
         this.screenY = screenY;
 
         // Basketball court: 28m long  ->  screenX = half a basketball court ( 14m )
-        ratioPXtoM = screenX / 14; // TODO: remember that if you scale this up, the ball will NOT move in the same ratio!!
+        ratioMtoPX = screenX / 14; // TODO: remember that if you scale this up, the ball will NOT move in the same ratio!!
 
-        x = (int) ( screenX - 2 * ratioPXtoM ); // two meters to the left of the edge.
-        y = (int) ( screenY - 2 * ratioPXtoM ); // two meters up from the bottom.
+        x = (int) ( screenX - 2 * ratioMtoPX); // two meters to the left of the edge.
+        y = (int) ( screenY - 2 * ratioMtoPX); // two meters up from the bottom.
 
 /*        x = (int) ( screenX /2 );
         y = (int) ( screenY /2);*/
@@ -70,8 +71,8 @@ public class Ball
         prevY = y;
 
         // basketball diameter 24.1 cm or 0.241 meters * 2 for better looks
-        width = (short) (0.241 * 2 * ratioPXtoM);
-        height = (short) (0.241 * 2 * ratioPXtoM);
+        width = (short) (0.241 * 2 * ratioMtoPX);
+        height = (short) (0.241 * 2 * ratioMtoPX);
 
 
         initialX = x + width /2f;
@@ -87,8 +88,8 @@ public class Ball
 
 
         // Physics-related stuff:
-        GRAVITY = 9.8f * ratioPXtoM; // should be negative due to the earth's gravity pulling it downwards.
-        MAX_VELOCITY = 24 * ratioPXtoM; // also max pull | meters per second.
+        GRAVITY = - 9.8f * ratioMtoPX; // should be negative due to the earth's gravity pulling it downwards.
+        MAX_VELOCITY = 17 * ratioMtoPX; // also max pull | meters per second.
         time = 0;
 
         howManyCols = 0;
@@ -140,7 +141,7 @@ public class Ball
         colX = 0;
         colY = 0;
 
-        colAngle = 0;
+
         howManyCols = 0;
         floorHitCount = 0;
 
@@ -183,7 +184,7 @@ public class Ball
             }
         }
 
-        else if (x - (prevX - x) <= 0 && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the left of the screen.
+        else if (x - (prevX - x) <= 0 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
         {
             if (collision != 2)
             {
