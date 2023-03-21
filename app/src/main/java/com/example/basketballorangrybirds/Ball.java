@@ -172,7 +172,7 @@ public class Ball
             {
                 howManyCols++;
 
-                colX = x;
+                colX = x + width + (x - prevX);
                 colY = y + height / 2f;
 
                 vx *= percentOfPull;
@@ -184,13 +184,13 @@ public class Ball
             }
         }
 
-        else if (x - (prevX - x) <= 0 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
+        else if (x - (prevX - x) <= 50 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
         {
             if (collision != 2)
             {
                 howManyCols++;
 
-                colX = x;
+                colX = x - (prevX - x);
                 colY = y + height / 2f;
 
                 vx *= percentOfPull;

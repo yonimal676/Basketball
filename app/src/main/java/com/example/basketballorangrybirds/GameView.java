@@ -192,20 +192,20 @@ public class GameView extends SurfaceView implements Runnable
         switch (col)
         {
             case 1: // right wall
-                ball.x = ball.vx * time + (screenX  - ball.initialX + ball.colX);
+                ball.x = ball.vx * time + (screenX  - ball.initialX + ball.colX - abs(ball.colX - screenX));
                 ball.y = ball.vy * time - ball.GRAVITY * time * time / 2 + (ball.initialY - abs(ball.prevY - ball.y) - fixY());
                 break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             case 2: // left wall
-                ball.x = ball.vx * time - ( 2 * screenX - ball.initialX + fixX());
-                ball.y = ball.vy * time - ball.GRAVITY * time * time / 2 + screenY - ball.initialY;
+                ball.x = ball.vx * time - ball.initialX + ball.colX + abs(50 - ball.colX) + 50;
+                ball.y = ball.vy * time - ball.GRAVITY * time * time / 2 + screenY - ball.initialY - ball.colY;
                 break;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            case 3: // floor
+            case 3 : // floor
                 ball.x = ball.vx * time + ( ball.colX - fixX());
                 ball.y = ball.vy * time - ball.GRAVITY * time * time / 2 + (ball.colY+ball.height+ground.height+abs(ball.initialY - ball.orgIY));
                 break;
@@ -453,13 +453,13 @@ public class GameView extends SurfaceView implements Runnable
     public void showStats (Canvas screenCanvas)
     {
 
-/*        screenCanvas.drawLine(0, 0, 0, screenY, paint5);
-        screenCanvas.drawLine(screenX, 0, screenX, screenY, paint5);*/
+        screenCanvas.drawLine(0, 0, 0, screenY, paint5);
+        screenCanvas.drawLine(screenX, 0, screenX, screenY, paint5);
 
-/*        if (ball.collision != 0) {
-            screenCanvas.drawPoint(ball.colX, ball.colY, paint6);
+        if (ball.collision != 0) {
+            screenCanvas.drawPoint(ball.colX, ball.colY, paint5);
             screenCanvas.drawLine(ball.colX, ball.colY, ball.x + fixX(), ball.y + fixY(), paint5);
-        }*/
+        }
 
         if (showAxisBool == 1)
         {
@@ -482,9 +482,7 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-//              SHOW BALL HITBOX
-
-
+//          SHOW BALL HITBOX
             screenCanvas.drawLine(ball.x, ball.y, ball.x + ball.width, ball.y, paint3);
             screenCanvas.drawLine(ball.x, ball.y, ball.x, ball.y + ball.height, paint3);
             screenCanvas.drawLine(ball.x + ball.width, ball.y, ball.x + ball.width, ball.y + ball.height, paint3);
@@ -501,7 +499,7 @@ public class GameView extends SurfaceView implements Runnable
             screenCanvas.drawText("velocity (m/s): " + ball.v / ball.ratioMtoPX, 75, 130, paint2);
             screenCanvas.drawText("velocityX (m/s): " + ball.vx / ball.ratioMtoPX, 75, 150, paint2);
             screenCanvas.drawText("velocityY (m/s): " + ball.vy / ball.ratioMtoPX, 75, 170, paint2);
-            screenCanvas.drawText("v0y: " + ball.v0y, 75, 210, paint2);
+            screenCanvas.drawText("v0y: " + ball.v0y / ball.ratioMtoPX, 75, 210, paint2);
 
             screenCanvas.drawText("collided: " + ball.collision, screenX / 2f - ball.width * 3, ball.height * 3 + 50, paint2);
             screenCanvas.drawText("colX: " + ball.colX, screenX / 2f - ball.width * 3, ball.height * 3 + 70, paint2);
