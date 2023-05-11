@@ -166,7 +166,7 @@ public class Ball
 
     public byte didCollide(short groundHeight)
     {
-        if (x /*+ width/2f  + (x - prevX)*/ >= screenX && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
+        if (x + width/2f  + (x - prevX) >= screenX && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
         {
             if (collision != 1)
             {
@@ -184,13 +184,13 @@ public class Ball
             }
         }
 
-        else if (x <= 0 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
+        else if (x - (prevX - x) <= 0 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
         {
             if (collision != 2)
             {
                 howManyCols++;
 
-                colX = x /*- (prevX - x)*/;
+                colX = x - (prevX - x);
                 colY = y + height / 2f;
 
                 /*vx *= percentOfPull;

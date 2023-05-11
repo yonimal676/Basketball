@@ -190,13 +190,13 @@ public class GameView extends SurfaceView implements Runnable
 
     public void physicsUpdate (byte col) // col -> collision number (type)
     {
-
+        ball.vy = ball.v0y - ball.GRAVITY * ball.time;
         switch (col)
         {
             case 1: // right wall
 
                 ball.x = ball.vx * ball.time + screenX + screenX - ball.initialX; // ✔️? but why ?
-                ball.y = (ball.vy*ball.time-ball.GRAVITY*ball.time*ball.time/2)  + ball.initialY ; // ✔️
+                ball.y = (ball.vy*ball.time-ball.GRAVITY*ball.time*ball.time/2)  + ball.initialY; // ✔️
                 break;
                 // (function[y]) + new axis 🤩
                 /*ALSO WORKS:  +(screenX - ball.initialX + ball.colX - abs(ball.colX - screenX))*/
@@ -205,7 +205,7 @@ public class GameView extends SurfaceView implements Runnable
 
             case 2: // left wall
                 ball.x = ball.vx * ball.time - screenX;
-                ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2);
+                ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2) + ball.initialY;
 
                 break;
 
