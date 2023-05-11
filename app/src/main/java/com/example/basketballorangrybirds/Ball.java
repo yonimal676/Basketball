@@ -88,8 +88,8 @@ public class Ball
 
 
         // Physics-related stuff:
-        GRAVITY = - 9.8f * ratioMtoPX; // should be negative due to the earth's gravity pulling it downwards.
-        MAX_VELOCITY = 17 * ratioMtoPX; // also max pull | meters per second.
+        GRAVITY = - 9.8f * 2 * ratioMtoPX; // should be negative due to the earth's gravity pulling it downwards.
+        MAX_VELOCITY = 21 * 1.4f * ratioMtoPX; // also max pull | meters per second.
         time = 0;
 
         howManyCols = 0;
@@ -166,7 +166,7 @@ public class Ball
 
     public byte didCollide(short groundHeight)
     {
-        if (x + width + (x - prevX) >= screenX && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
+        if (x /*+ width/2f  + (x - prevX)*/ >= screenX && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
         {
             if (collision != 1)
             {
@@ -175,8 +175,8 @@ public class Ball
                 colX = x + width + (x - prevX);
                 colY = y + height / 2f;
 
-                vx *= percentOfPull;
-                vy *= percentOfPull;
+                /*vx *= percentOfPull;
+                vy *= percentOfPull;*/
 
                 vx = -1 * Math.abs(vx);
 
@@ -184,17 +184,17 @@ public class Ball
             }
         }
 
-        else if (x - (prevX - x) <= 50 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
+        else if (x <= 0 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
         {
             if (collision != 2)
             {
                 howManyCols++;
 
-                colX = x - (prevX - x);
+                colX = x /*- (prevX - x)*/;
                 colY = y + height / 2f;
 
-                vx *= percentOfPull;
-                vy *= percentOfPull;
+                /*vx *= percentOfPull;
+                vy *= percentOfPull;*/
 
                 vx = Math.abs(vx);
 
