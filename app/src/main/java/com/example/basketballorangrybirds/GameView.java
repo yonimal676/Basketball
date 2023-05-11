@@ -155,12 +155,13 @@ public class GameView extends SurfaceView implements Runnable
 
         if (ball.didCollide(ground.height) == 0) // if did not collide
         {
+
+
+
             if (quarterOfLaunch == 2)
             {
                 ball.vx = abs(ball.vx);
-/*
-                ball.vy = abs(ball.vy);
-*/
+//                ball.vy = abs(ball.vy);
             }
             else {
                 ball.vy = quarterOfLaunch == 1  ?  abs(ball.vy) : -1 * abs(ball.vy);
@@ -168,6 +169,7 @@ public class GameView extends SurfaceView implements Runnable
             } // =4 -> -1 * abs(ball.vy) && -1 * abs(ball.vx)
 
             ball.vy = ball.v0y - ball.GRAVITY * ball.time; // vx doesn't change ever
+
 
 
             ball.x = ball.initialX + ball.vx * ball.time; // Vx * t
@@ -191,6 +193,7 @@ public class GameView extends SurfaceView implements Runnable
     public void physicsUpdate (byte col) // col -> collision number (type)
     {
         ball.vy = ball.v0y - ball.GRAVITY * ball.time;
+
         switch (col)
         {
             case 1: // right wall
@@ -198,7 +201,7 @@ public class GameView extends SurfaceView implements Runnable
                 ball.x = ball.vx * ball.time + screenX + screenX - ball.initialX; // ✔️? but why ?
                 ball.y = (ball.vy*ball.time-ball.GRAVITY*ball.time*ball.time/2)  + ball.initialY; // ✔️
                 break;
-                // (function[y]) + new axis 🤩
+                // (function[y]) + new axis = new function! 🤩
                 /*ALSO WORKS:  +(screenX - ball.initialX + ball.colX - abs(ball.colX - screenX))*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -213,8 +216,11 @@ public class GameView extends SurfaceView implements Runnable
 
 
             case 3: // floor
-                ball.x = ball.vx * ball.time + ( ball.colX - fixX());
-                ball.y = ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2 + (ball.colY+ball.height+ground.height+abs(ball.initialY - ball.orgIY));
+
+                ball.x = ball.vx * ball.time + ( ball.initialX - fixX());
+
+                ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2) + ball.initialY - ground.height;
+
                 break;
 
         }

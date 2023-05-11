@@ -88,7 +88,7 @@ public class Ball
 
 
         // Physics-related stuff:
-        GRAVITY = - 9.8f * 2 * ratioMtoPX; // should be negative due to the earth's gravity pulling it downwards.
+        GRAVITY = - 9.8f * 1.3f * ratioMtoPX; // should be negative due to the earth's gravity pulling it downwards.
         MAX_VELOCITY = 21 * 1.4f * ratioMtoPX; // also max pull | meters per second.
         time = 0;
 
@@ -166,13 +166,13 @@ public class Ball
 
     public byte didCollide(short groundHeight)
     {
-        if (x + width/2f  + (x - prevX) >= screenX && ! (y + height + (y - prevY) >= screenY - groundHeight))  // ball touches the right of the screen.
+        if (x + (x - prevX) >= screenX /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the right of the screen.
         {
             if (collision != 1)
             {
                 howManyCols++;
 
-                colX = x + width + (x - prevX);
+                colX = x + (x - prevX);
                 colY = y + height / 2f;
 
                 /*vx *= percentOfPull;
@@ -184,7 +184,7 @@ public class Ball
             }
         }
 
-        else if (x - (prevX - x) <= 0 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
+        else if (x + width - (prevX - x) <= 0 /*&& ! (y + height + (y - prevY) >= screenY - groundHeight)*/)  // ball touches the left of the screen.
         {
             if (collision != 2)
             {
@@ -208,7 +208,10 @@ public class Ball
         else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
         {
 
+/*
             if (collision / 10 != 3)
+*/
+            if (collision == 3)
             {
                 howManyCols++;
                 floorHitCount++;
@@ -216,13 +219,17 @@ public class Ball
                 colX = x;
                 colY = y + height;
 
-                vx *= percentOfPull;
-                vy *= percentOfPull;
-
+                /*vx *= percentOfPull;
+                vy *= percentOfPull;*/
+/*
                 for(int i = 1; i <= floorHitCount; i++)
-                    vy = -0.5f * Math.abs(vy);
+                    vy = -0.5f * Math.abs(vy); //<- percentOfPull should be here (in negative)
 
-                return collision = (byte) (3 * 10 + floorHitCount);
+                return collision = (byte) (3 * 10 + floorHitCount);*/
+
+                vy = -1 * Math.abs(vy);
+
+                return collision = 3;
             }
         }
 
