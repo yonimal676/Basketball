@@ -211,12 +211,12 @@ public class Ball
 /*
             if (collision / 10 != 3)
 */
-            if (collision == 3)
+            if (collision != 3)
             {
                 howManyCols++;
                 floorHitCount++;
 
-                colX = x;
+                colX = x + width /2f;
                 colY = y + height;
 
                 /*vx *= percentOfPull;

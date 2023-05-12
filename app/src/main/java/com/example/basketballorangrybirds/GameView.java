@@ -34,7 +34,7 @@ public class GameView extends SurfaceView implements Runnable
     private final GameActivity activity;
     private final Context gameActivityContext;
     private byte quarterOfLaunch;
-
+    float SLEEP_MILLIS;
 
     // Technical stuff
 
@@ -172,8 +172,8 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
-            ball.x = ball.initialX + ball.vx * ball.time; // Vx * t
-            ball.y = ball.initialY + ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2; // h + Vy * t - g * t² / 2
+            ball.x = calcX();
+            ball.y = calcY();
 
 
             // Explanation: In previous attempts, I didn't change the velocities, but rather the way the ball moves,
@@ -192,23 +192,29 @@ public class GameView extends SurfaceView implements Runnable
 
     public void physicsUpdate (byte col) // col -> collision number (type)
     {
-        ball.vy = ball.v0y - ball.GRAVITY * ball.time;
 
         switch (col)
         {
             case 1: // right wall
 
-                ball.x = ball.vx * ball.time + screenX + screenX - ball.initialX; // ✔️? but why ?
-                ball.y = (ball.vy*ball.time-ball.GRAVITY*ball.time*ball.time/2)  + ball.initialY; // ✔️
+                ball.vy = ball.v0y - ball.GRAVITY * ball.time;
+
+                ball.x = calcX() + ball.colX - ball.initialX + (ball.colX - ball.initialX); // ✔️? but why ?
+                ball.y = calcY() ; // ✔️
+
+
                 break;
-                // (function[y]) + new axis = new function! 🤩
-                /*ALSO WORKS:  +(screenX - ball.initialX + ball.colX - abs(ball.colX - screenX))*/
+            // (function[y]) + new axis = new function! 🤩
+            /*ALSO WORKS:  +(screenX - ball.initialX + ball.colX - abs(ball.colX - screenX))*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
             case 2: // left wall
-                ball.x = ball.vx * ball.time - screenX;
-                ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2) + ball.initialY;
+
+                ball.vy = ball.v0y - ball.GRAVITY * ball.time;
+
+                ball.x = calcX() - screenX - ball.initialX;
+                ball.y = calcY() ;
 
                 break;
 
@@ -217,9 +223,13 @@ public class GameView extends SurfaceView implements Runnable
 
             case 3: // floor
 
-                ball.x = ball.vx * ball.time + ( ball.initialX - fixX());
+                ball.vy = ball.v0y + ball.GRAVITY * ball.time;
 
-                ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2) + ball.initialY - ground.height;
+                ball.vy = -1 * Math.abs(ball.vy);
+
+                ball.x = calcX() ;
+
+                ball.y = calcY() + 2*(screenX - ball.initialX) + ground.height + ball.height;
 
                 break;
 
@@ -229,13 +239,78 @@ public class GameView extends SurfaceView implements Runnable
     }
 
 
+    /*prev version
+
+
+
+            ball.x = ball.initialX + ball.vx * ball.time; // Vx * t
+            ball.y = ball.initialY + ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2; // h + Vy * t - g * t² / 2
+in other method
+
+        }
+
+
+        else
+            physicsUpdate(ball.collision);
+    }
+
+
+
+    public void physicsUpdate (byte col) // col -> collision number (type)
+    {
+        ball.vy = ball.v0y - ball.GRAVITY * ball.time;
+
+        switch (col)
+        {
+            case 1:
+
+                ball.x = ball.vx * ball.time + screenX + screenX - ball.initialX;
+                ball.y = (ball.vy*ball.time-ball.GRAVITY*ball.time*ball.time/2)  + ball.initialY;
+
+
+                break;
+
+
+
+            case 2:
+    ball.x = ball.vx * ball.time - screenX;
+    ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2) + ball.initialY;
+
+                break;
+
+
+
+            case 3:
+
+    ball.x = ball.vx * ball.time + ( ball.initialX - fixX());
+
+    ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2) + ball.initialY - ground.height;
+
+                break;
+
+}
+
+
+    }
+
+
+    */
+
+
+
+
+
+
+
+
+
     public void draw ()
     {
         if (getHolder().getSurface().isValid()) // is the surface valid?
         {
             Canvas screenCanvas = getHolder().lockCanvas(); // create the canvas
 
-            // KEEP IN MIND THAT THE ORDER MATTERS. ↓
+            // KEEP IN MIND THAT THE ORDER MATTERS! ↓
 
             if (showAxisBool == 0)
                 screenCanvas.drawBitmap(background.backgroundBitmap, 0, 0, paint1);//background
@@ -243,18 +318,25 @@ public class GameView extends SurfaceView implements Runnable
                 screenCanvas.drawBitmap(background.devBackgroundBitmap, 0, 0, paint1);//background
 
 
-            screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);//ball
-            screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
-
-            showStats(screenCanvas);
 
 
 
             if (ball.time > 0.032)
                 for (short i = 0; i < ball.dotArrayListX.size() - 1; i++)
-                    try{screenCanvas.drawCircle(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), ball.width/20f, paint3/*path_paint*/);}
+                    try{
+//                        if (!(ball.y + ball.height + (ball.y - ball.prevY) >= screenY - ground.height)) // TODO
+                        screenCanvas.drawCircle(ball.dotArrayListX.get(i), ball.dotArrayListY.get(i), ball.width/20f, paint3/*path_paint*/);
+                    }
                     catch (Exception ignored) {}
             // discussion: The Dots look disgusting #28
+
+
+
+
+            screenCanvas.drawBitmap(ball.ballBitmap, ball.x,ball.y , paint1);//ball
+            screenCanvas.drawBitmap(ground.groundBitmap, ground.x, ground.y, paint1);//ground
+
+            showStats(screenCanvas);
 
 
 
@@ -308,7 +390,7 @@ public class GameView extends SurfaceView implements Runnable
 
     private void sleep() // discussion: Time updating #33 | byte is like int | refresh rate is (1000 / SLEEP_MILLIS = 62.5 FPS)
     {
-        float SLEEP_MILLIS = 1000/120f;//
+        SLEEP_MILLIS = 1000/120f;//
 
         try { Thread.sleep((long) (SLEEP_MILLIS / 2)); }
         catch (InterruptedException e) {e.printStackTrace();}
@@ -326,6 +408,14 @@ public class GameView extends SurfaceView implements Runnable
 
 
 
+
+    float calcX () // d0(x0) + Vx * t
+    {return (ball.initialX + ball.vx * ball.time); }
+
+    float calcY () // h(y0) + Vy * t - g * t² / 2
+    {return (ball.initialY + ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2);}
+
+    // ooh fancy 👌
 
 
 
