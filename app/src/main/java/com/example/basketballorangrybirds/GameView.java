@@ -157,18 +157,17 @@ public class GameView extends SurfaceView implements Runnable
         {
 
 
-
             if (quarterOfLaunch == 2)
             {
                 ball.vx = abs(ball.vx);
-//                ball.vy = abs(ball.vy);
+                ball.vy = abs(ball.vy);
             }
             else {
                 ball.vy = quarterOfLaunch == 1  ?  abs(ball.vy) : -1 * abs(ball.vy);
                 ball.vx = quarterOfLaunch == 3  ?  abs(ball.vx) : -1 * abs(ball.vx);
             } // =4 -> -1 * abs(ball.vy) && -1 * abs(ball.vx)
 
-            ball.vy = ball.v0y - ball.GRAVITY * ball.time; // vx doesn't change ever
+            ball.vy = ball.v0y + ball.GRAVITY * ball.time;
 
 
 
@@ -197,7 +196,8 @@ public class GameView extends SurfaceView implements Runnable
         {
             case 1: // right wall
 
-                ball.vy = ball.v0y - ball.GRAVITY * ball.time;
+
+                ball.vy = ball.v0y + ball.GRAVITY * ball.time;
 
                 ball.x = calcX() + ball.colX - ball.initialX + (ball.colX - ball.initialX); // ✔️? but why ?
                 ball.y = calcY() ; // ✔️
@@ -211,7 +211,7 @@ public class GameView extends SurfaceView implements Runnable
 
             case 2: // left wall
 
-                ball.vy = ball.v0y - ball.GRAVITY * ball.time;
+                ball.vy = ball.v0y + ball.GRAVITY * ball.time;
 
                 ball.x = calcX() - screenX - ball.initialX;
                 ball.y = calcY() ;
@@ -221,7 +221,7 @@ public class GameView extends SurfaceView implements Runnable
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-            case 3: // floor
+            default: // floor
 
                 ball.vy = ball.v0y + ball.GRAVITY * ball.time;
 
@@ -229,7 +229,7 @@ public class GameView extends SurfaceView implements Runnable
 
                 ball.x = calcX() ;
 
-                ball.y = calcY() + 2*(screenX - ball.initialX) + ground.height + ball.height;
+                ball.y = calcY();
 
                 break;
 
@@ -237,67 +237,6 @@ public class GameView extends SurfaceView implements Runnable
 
 
     }
-
-
-    /*prev version
-
-
-
-            ball.x = ball.initialX + ball.vx * ball.time; // Vx * t
-            ball.y = ball.initialY + ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2; // h + Vy * t - g * t² / 2
-in other method
-
-        }
-
-
-        else
-            physicsUpdate(ball.collision);
-    }
-
-
-
-    public void physicsUpdate (byte col) // col -> collision number (type)
-    {
-        ball.vy = ball.v0y - ball.GRAVITY * ball.time;
-
-        switch (col)
-        {
-            case 1:
-
-                ball.x = ball.vx * ball.time + screenX + screenX - ball.initialX;
-                ball.y = (ball.vy*ball.time-ball.GRAVITY*ball.time*ball.time/2)  + ball.initialY;
-
-
-                break;
-
-
-
-            case 2:
-    ball.x = ball.vx * ball.time - screenX;
-    ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2) + ball.initialY;
-
-                break;
-
-
-
-            case 3:
-
-    ball.x = ball.vx * ball.time + ( ball.initialX - fixX());
-
-    ball.y = (ball.vy * ball.time - ball.GRAVITY * ball.time * ball.time / 2) + ball.initialY - ground.height;
-
-                break;
-
-}
-
-
-    }
-
-
-    */
-
-
-
 
 
 

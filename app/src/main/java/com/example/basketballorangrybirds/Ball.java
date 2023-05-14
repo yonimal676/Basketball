@@ -87,8 +87,8 @@ public class Ball
 
 
 
-        // Physics-related stuff:
-        GRAVITY = - 9.8f * 1.3f * ratioMtoPX; // should be negative due to the earth's gravity pulling it downwards.
+        // Physics-related stuff: todo -> NOT NEGATIVE GRAVITY,  also:   ball.vy = ball.v0y + ball.GRAVITY * ball.time;
+        GRAVITY =  9.8f * 6.3f * ratioMtoPX; // should be negative due to the earth's gravity pulling it downwards.
         MAX_VELOCITY = 21 * 1.4f * ratioMtoPX; // also max pull | meters per second.
         time = 0;
 
@@ -208,10 +208,7 @@ public class Ball
         else if (y + height + (y - prevY) >= screenY - groundHeight)  // ball touches ground.
         {
 
-/*
             if (collision / 10 != 3)
-*/
-            if (collision != 3)
             {
                 howManyCols++;
                 floorHitCount++;
@@ -219,19 +216,20 @@ public class Ball
                 colX = x + width /2f;
                 colY = y + height;
 
-                /*vx *= percentOfPull;
+
+/*                vx *= percentOfPull;
                 vy *= percentOfPull;*/
-/*
+
+
                 for(int i = 1; i <= floorHitCount; i++)
-                    vy = -0.5f * Math.abs(vy); //<- percentOfPull should be here (in negative)
+                    vy = -1 * percentOfPull * Math.abs(vy); //<- percentOfPull should be here (in negative)
 
-                return collision = (byte) (3 * 10 + floorHitCount);*/
+                vx *= percentOfPull;
 
-                vy = -1 * Math.abs(vy);
+                return collision = (byte) (3 * 10 + floorHitCount);
 
-                return collision = 3;
             }
-        }
+        }//TODO : do col axis update after collision?
 
 
         else if (howManyCols == 0)
